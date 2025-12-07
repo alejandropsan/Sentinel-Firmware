@@ -1,0 +1,23 @@
+Filetype: Flipper Animation Manifest
+Version: 1
+
+Name: Sentinel_Scanning_128x64
+Min butthurt: 0
+Max butthurt: 6
+Min level: 1
+Max level: 30
+Weight: 4
+
+Name: Sentinel_Hacking_128x64
+Min butthurt: 0
+Max butthurt: 10
+Min level: 1
+Max level: 30
+Weight: 4
+
+Name: Sentinel_Secure_128x64
+Min butthurt: 0
+Max butthurt: 18
+Min level: 1
+Max level: 30
+Weight: 4

@@ -4,7 +4,7 @@ import os
 
 # For more details on these options, run 'fbt -h'
 
-FIRMWARE_ORIGIN = "Momentum"
+FIRMWARE_ORIGIN = "Sentinel"
 
 # Default hardware target
 TARGET_HW = 7

@@ -1,189 +1,76 @@
-### Breaking Changes:
-- OFW: JS: SDK 1.0:
-  - Scripts using these modules will need to be updated
-  - Module `gui/submenu`:
-    - The API now takes submenu items as view children, instead of as a view prop
-    - Effort required to update scripts using `gui/submenu`: very minimal
-  - Module `gui/widget`:
-    - The `button` event now returns an object with `key` and `type`, instead of just the key name
-    - Effort required to update scripts using `gui/widget`: very minimal
+##### ESPAÑOL // SPANISH #####
 
-### Added:
-- Apps:
-  - Games: Geometry Flip (by @goosedev72-projects)
-  - GPIO:
-    - [GPIO] Explorer (by @EvgeniGenchev07)
-    - [KT0803] FM Transmitter (by @goosedev72-projects)
-    - [SPI] Terminal (by @janwiesemann)
-  - GPIO/Debug:
-    - [FTDI232H] FlipTDI (by @Skorpionm)
-    - [INA2xx] INA Meter (by @cepetr)
-  - GPIO/ESP: [ESP32] Ghost ESP (by @jaylikesbunda)
-  - GPIO/FlipBoard:
-    - FlipBoard Blinky (by @jamisonderek)
-    - FlipBoard Keyboard (by @jamisonderek)
-    - FlipBoard Signal (by @jamisonderek)
-    - FlipBoard Simon (by @jamisonderek)
-  - GPIO/FlipperHTTP:
-    - FlipMap (by @jblanked)
-    - Free Roam (by @jblanked)
-  - GPIO/GPS: [NMEA] Nearby Files (by @Stichoza)
-  - GPIO/Sensors: [MH-Z19] CO2 Logger (by @harryob2)
-  - iButton: iButton Converter (by @Leptopt1los)
-  - Infrared:
-    - Hitachi AC Remote (by @dogtopus)
-    - LIDAR Emulator (by @regaly)
-    - Midea AC Remote (by @xakep666)
-    - Mitsubishi AC Remote (by @achistyakov)
-    - Xbox Controller (by @gebeto)
-  - Media:
-    - Fmatrix (by @misterwaztaken)
-    - Image Viewer (by @polioan)
-    - Space Playground (by @alanfortlink)
-    - Video Player (by @LTVA1)
-  - NFC:
-    - NFC-Eink (by @RebornedBrain)
-    - SaFlip (by @aaronjamt)
-  - RFID: Simultaneous UHF RFID Reader (by @haffnerriley)
-  - Sub-GHz:
-    - Chief Cooker (by @denr01)
-    - Flipper Share (by @lomalkin)
-    - HC-11 Modem (by @Giraut)
-    - Sub Analyzer (by @RocketGod-git)
-    - Sub-GHz Scheduler (by @shalebridge, fixes by @xMasterX)
-  - Tools:
-    - FlipCrypt (by @Tyl3rA)
-    - IconEdit (by @rdefeo)
-    - Programmer Calculator (by @armixz)
-    - Resistance Calculator (by @instantiator)
-    - Tasks (by @MadLadSquad)
-    - Voltage Calculator (by @HappyAmos)
-  - USB:
-    - LEGO Dimensions Toy Pad (by @SegerEnd)
-    - USB-MIDI (by @kribesk, original by @DrZlo13)
-- NFC:
-  - XERO: MIFARE Ultralight C feature parity with MIFARE Classic in native NFC app (by @noproto)
-    - Dictionary attack: Uses system and user dictionaries stored under /nfc/assets/ to unlock Ultralight C tags
-    - Key management: Extra Actions → MIFARE Ultralight C Keys in the NFC app allows you to add, list, and remove Ultralight C keys from your Flipper
-    - UI: Dictionary attack scene and menu options
-  - OFW: FeliCa Service Directory Traverse + Dump All Unencrypted-Readable Services' Blocks (by @zinongli)
-  - OFW: FeliCa Emulation Handle certain Polling commands in firmware (by @dogtopus)
-  - OFW: FeliCa Dump All Systems (by @zinongli)
-  - OFW: Amusement IC Card Parser for FeliCa Lite & Lite-S (by @zinongli)
-  - OFW: MFC 1k Banapass Parser (by @zinongli)
-  - UL: Returning fix for reading PWD locked MFUL (by @mishamyte)
-  - UL: Added UL-C keys to the dictionary (by @mishamyte)
-  - Add Saflok MFUL Parser Support (#474 by @aaronjamt)
-  - Add MIFARE Classic "Show Keys" UI (#473 by @aaronjamt)
-  - Add MFUL counters to Info page (#472 by @aaronjamt)
-- SubGHz:
-  - UL: Roger (static 28 bit) with add manually support (by @xMasterX & @mishamyte)
-  - UL: V2 Phoenix full support (button switch, add manually, counter decrypt/encrypt) (by @xMasterX & @RocketGod-git, original code by @Skorpionm)
-  - UL: Add Keeloq support for - Motorline (with add manually support), Rosh, Pecinin, Rossi, Merlin, Steelmate (by @xMasterX & @RocketGod-git)
-  - UL: Nero Radio static parse and display more data (by @xMasterX)
-  - UL: Marantec protocol implement CRC verification display and add manually support (by @xMasterX & @li0ard, original code by @Skorpionm)
-  - UL: Keeloq Comunello add manually support (by @xMasterX)
-  - UL: Add variant of 'Add Manually' menu with manual editing for each value (by @MrLego8-9)
-  - UL: Add ZKTeco 430.5 MHz add manually support (by @xMasterX)
-  - UL: Add Elplast 18bit static code protocol (hello Hackcat ^_^)
-  - UL: Try to decode BFT (2 buttons remotes only) on the fly in regular Read mode (by @xMasterX)
-  - UL: Add support for Came Atomo TOP44RBN remotes (by @xMasterX & @mishamyte)
-  - UL: Add IL-100 Smart support for Add manually (by @xMasterX)
-  - UL: Add experimental counter overflow mode (OFEX), replicates how some key duplicators work, DO NOT USE if you don't know what you are doing, it will reset your counter value! (by @xMasterX)
-  - UL: Counter modes settings per-file for Keeloq, CAME Atomo, Nice Flor S, AlutechAT4N (by @xMasterX & @Dmitry422)
-  - UL: Add AN-Motors AT4 button on arrow keys (0xC) (by @xMasterX)
-- RFID:
-  - Support writing Securakey, Jablotron and FDX-B to EM4305 cards (#434 by @jamisonderek)
-  - OFW: Show ISO-3166 Country Names For Pet Chips (by @zinongli)
-- BT Remote:
-  - Add Rename Option for BT Remote, simplify Bad KB BLE profile (#439 by @aaronjamt & @WillyJL)
-  - OFW: Make mouse clicker button selectable (by @LordMZTE)
-- MNTM Settings:
-  - Add Main Menu support for directories and generic files (including JS files) (#331 by @956MB & @WillyJL)
-  - Add Skip Sliding Animations option for Lockscreen (#436 by @aaronjamt)
-- CLI:
-  - OFW: NFC CLI commands (by @RebornedBrain)
-  - OFW: Buzzer command (by @ivanbarsukov)
-- JS: Added all missing GUI views for JS (by @portasynthinca3):
-  - Added `gui/button_menu`
-  - Added `gui/button_panel`
-  - Added `gui/menu`
-  - Added `gui/number_input`
-  - Added `gui/popup`
-  - Added `gui/vi_list`
-  - Changed API for `gui/submenu`, see breaking changes above
-- Desktop: Add Keybinds support for directories (#331 by @956MB & @WillyJL)
-- Input Settings: Add Vibro Trigger option (#429 by @956MB)
-- Archive: Support opening and favoriting Picopass files (by @WillyJL)
-- Bad KB: Colemak keyboard layout (#466 by @Ashe-Sterling)
-- GUI:
-  - GUI: Add Screen Settings shortcut to Control Center brightness click (#487 by @tototo31)
-  - OFW: Add date/time input module (by @aaronjamt)
+# Registro de cambios
 
-### Updated:
-- Apps:
-  - XERO: MFKey: Key recovery is 20% faster, new write buffering of Static Encrypted Nested key candidates performs recovery 70x faster (by @noproto)
-  - UL: Sub-GHz Remote: Add possibility to use custom buttons (by @MrLego8-9)
-  - UL: BT/USB Remote: PTT global zoom and google meet shortcuts for MacOS (by @hryamzik)
-  - Asteroids: Bugfixes, title screen, Drone Buddy power-up (by @SimplyMinimal)
-  - Combo Cracker: Allow press and hold to change values, add tutorial (by @TAxelAnderson), support alphabetic combination locks (by @henrygab)
-  - ESP Flasher: Bump Marauder 1.8.10 (by @justcallmekoko), bump FlipperHTTP 2.1.1 (by @jblanked), add C5 support (by @Play2BReal), more reliable bootloader mode on SWCLK (by @WillyJL)
-  - FlipDownloader: Added a new option to download GitHub repositories with dedicated keyboard, add auto updating, new keyboard, better saving system (by @jblanked)
-  - FlipSocial: C++ rewrite, comments on feed posts, simpler logic and registration, fixed auto-updating, better saving system, bugfixes (by @jblanked)
-  - FlipWiFi: Minor bugfixes (by @jblanked)
-  - Flipp Pomodoro: Added hints, added configuration page (by @thevan4), new notification modes (by @evilsquid888)
-  - Flipper Blackhat: Add Deauth Broadcast command, updated for latest firmware (by @o7-machinehum)
-  - KeyCopier: Added Weiser WR3 key format (by @lightos), added Suzuki SUZ18 key format (by @RIcePatrol)
-  - Mass Storage: Add ability to spoof USB identity values (by @xtruan)
-  - Metroflip: Fix unsupported card crash, RENFE Suma 10 support, GEG Connect AID added, Top Up log parsing and animations, 16 new rail lines, support for parsing area codes, saving function for Suica/Japan Rail IC, bugfixes (by @luu176)
-  - NFC Maker: Support making empty/blank NDEF payloads (by @WillyJL)
-  - NFC Playlist: Refactor playlist worker, new settings layout and management, loop setting, controls to move between items, time controls setting (by @acegoal07)
-  - NMEA GPS: Moved to GPIO/GPS subfolder (by @WillyJL)
-  - Passy: Misc memory management bugfixes, misc UI improvements (by @qistoph)
-  - RFID/iButton Fuzzer: Fix prev navigation for custom UIDs (by @ahnilica)
-  - Seader: Fix ATS handling (by @NVX), reset SAM on error, support config card, code optimizations, use same commands as Proxmark3, distinguish SIO SE/SR (by @bettse)
-  - Sentry Safe: New interface, settings & help page (by @H4ckd4ddy)
-  - Seos Compatible: Add keys v2 support with per-device encryption, improve logging (by @bettse)
-  - Sub-GHz Playlist: Fix crash on disallowed frequencies (by @WillyJL)
-  - Weather Station: Added support for solight TE44 (by @fersingb)
-  - Weebo: Prevent 0x88 in UID[3], add more figures to the database (by @bettse)
-  - WiFi Marauder: Support for ESP32Marauder 1.8.6 (by @justcallmekoko)
-- Sub-GHz:
-  - UL: Add 868.46 MHz to default subghz freqs list (by @xMasterX)
-  - UL: Reduce less popular freqs in default hopper preset, make it faster (by @xMasterX)
-  - UL: Tune Linear (add better EZCode support), Dickert MAHS decoders (by @xMasterX)
-  - UL: Some fixes and improvements to Honeywell Sec protocol (by @xMasterX)
-- Infrared:
-  - Update universal remotes from IRDB (#465 by @jaylikesbunda)
-  - OFW: Add an old JVC model to universal remotes (by @zgracem)
-  - OFW: Add Daikin FTXN25LV1B9 and Toyotomi KTN22-12R32 to universal remotes (by @minchogaydarov)
-  - OFW: Infrared Universal remote DBs unit test & move infrared_signal / infrared_brute_force into lib (by @xMasterX)
-- OFW: BLE: Improved pairing security (by @hedger)
-- JS: Expose button event type in `gui/widget` button callback, see breaking changes above (by @WillyJL)
-- NFC:
-  - OFW: Synchronise mf_classic_dict.nfc with mfc_default_keys.dic from Proxmark3 Iceman fork, 164 new MFC keys (by @ry4000)
-  - OFW: Expose nfc_common.h (by @zinongli)
-- OFW: GUI: Store View by value inViewStack to save memory (by @CookiePLMonster)
-- Docs:
-  - UL: Update Sub-GHz DoorHan programming instructions (by @li0ard)
-  - OFW: Update devboard docs (by @alexeyzakh)
+Todos los cambios importantes en el firmware de Sentinel se documentarán en este archivo.
 
-### Fixed:
-- CLI: Fix long delay with quick connect/disconnect, qFlipper should connect faster as expected again (by @WillyJL)
-- Storage: Dont send mount event if SD mounted at boot, fix SD card icon showing late on boot (by @WillyJL)
-- Bad KB:
-  - Fix modifier keys with HOLD/RELEASE commands (by @WillyJL)
-  - OFW: Fix demo_windows.txt for newer version of ai enabled Windows Notepad not able to keep up with default fast input text (by @ase1590)
-- Desktop: Fix lock screen hang (#438 by @aaronjamt)
-- NFC:
-  - Fix incorrect Saflok year formula (#433 by @Eltrick)
-  - Fix read crash with unexpectedly large MFC AUTH(0) response, eg with Chameleon Ultra NTAG emualtion (by @WillyJL)
-  - Fix slashes in prefilled filename (by @WillyJL)
-- FBT: Fix redundant decl for apps using an icon disabled in API (by @WillyJL)
-- UL: Sub-GHz: Fix crash in add manually menu (by @xMasterX)
-- OFW: GUI: Fix Number Input Save Icon (by @zinongli)
-- OFW: JS: Stop PWM on exit (by @portasynthinca3)
-- OFW: Sub-GHz: Fix TIM17 config not applied immediately (by @Aerosnail)
+El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Removed:
-- Disabled FURI_TRACE due to flash space constraints, `furi_check failed` crashes will no longer show the file path of the error for now
+## [Sin publicar]
+
+### Añadido
+- Bifurcación inicial del firmware Momentum mntm-011.
+- Marca Sentinel y paquete de activos.
+- Canalización CI/CD con GitHub Actions.
+- Hoja de ruta del proyecto y estructura de la documentación.
+
+### Seguridad
+- Base para el sistema PIN de coacción.
+- Planificación de la arquitectura de almacenamiento cifrado.
+
+### Desarrollador
+- Configuración del entorno de desarrollo.
+- Configuración del sistema de compilación
+- Estructura de código para nuevas funciones
+
+---
+
+## Orígenes del proyecto
+
+El firmware Sentinel se basa en [Momentum Firmware](https://github.com/Next-Flip/Momentum-Firmware),
+que a su vez evolucionó a partir de Xtreme Firmware. Agradecemos a todos los colaboradores que construyeron esta base.
+
+**Créditos de Momentum**: WillyJL, xMasterX, Dmitry422, 956MB y más de 144 colaboradores.
+**Créditos de Xtreme**: ClaraCrazy y el equipo original de Xtreme.
+
+
+
+
+
+
+##### INGLÉS // ENGLISH #####
+
+# Changelog
+
+All notable changes to Sentinel Firmware will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- Initial fork from Momentum Firmware mntm-011
+- Sentinel branding and Asset Pack
+- CI/CD pipeline with GitHub Actions
+- Project roadmap and documentation structure
+
+### Security
+- Foundation for Duress PIN system
+- Encrypted storage architecture planning
+
+### Developer
+- Development environment setup
+- Build system configuration
+- Code structure for new features
+
+---
+
+## Project Origins
+
+Sentinel Firmware is built on [Momentum Firmware](https://github.com/Next-Flip/Momentum-Firmware),
+which itself evolved from Xtreme Firmware. We are grateful to all contributors who built this foundation.
+
+**Momentum Credits**: WillyJL, xMasterX, Dmitry422, 956MB, and 144+ other contributors
+**Xtreme Credits**: ClaraCrazy and the original Xtreme team

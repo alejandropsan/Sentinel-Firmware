@@ -1,0 +1,21 @@
+Filetype: Flipper Animation Manifest
+Version: 1
+
+Name: Sentinel
+Description: Dark, professional theme for security professionals
+Author: Sentinel Team
+Version: 1.0.0
+
+Idle frames: 15
+Active frames: 0
+Passive frames: 0
+
+Min butthurt: 0
+Max butthurt: 14
+Min level: 1
+Max level: 30
+Weight: 8
+
+Width: 128
+Height: 64
+Duration: 1500

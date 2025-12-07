@@ -1,0 +1,8 @@
+Filetype: Flipper Asset Pack
+Version: 1
+
+Name: Sentinel
+Description: Dark theme designed for security professionals and penetration testers. Features minimalist icons, professional color scheme, and enhanced readability.
+Author: Sentinel Team
+Version: 1.0.0
+Homepage: https://github.com/alejandropsan/Sentinel-Firmware
