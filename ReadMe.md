@@ -1,6 +1,10 @@
+<div align="center">
+
+<img src="assets/images/Sentinel-firmware-logo.png" alt="Sentinel Firmware Logo" width="800"/>
+
 ##### ESPAÑOL // SPANISH #####
 
-# 🔱 Firmware Sentinel
+# Firmware Sentinel
 
 **Firmware Flipper Zero centrado en la seguridad con scripting avanzado y análisis de señales profesional**
 
@@ -8,6 +12,7 @@
 [![Licencia](https://img.shields.io/github/license/alejandropsan/Sentinel-Firmware?color=blue)](https://github.com/alejandropsan/Sentinel-Firmware/blob/dev/LICENSE)
 [![Descargas](https://img.shields.io/github/downloads/alejandropsan/Sentinel-Firmware/total?color=success)](https://github.com/alejandropsan/Sentinel-Firmware/releases)
 
+</div>
 ## Noticias y Novedades
 - ** 07/12/2025 Comienzo del proyecto: Hemos iniciado el fork y la creación del repositorio.**
 - ** 08/12/2025 Creación de servidor en Discord: https://discord.gg/eQHHB6SSRU.
