@@ -8,16 +8,20 @@
 [![Licencia](https://img.shields.io/github/license/alejandropsan/Sentinel-Firmware?color=blue)](https://github.com/alejandropsan/Sentinel-Firmware/blob/dev/LICENSE)
 [![Descargas](https://img.shields.io/github/downloads/alejandropsan/Sentinel-Firmware/total?color=success)](https://github.com/alejandropsan/Sentinel-Firmware/releases)
 
-## 🎯 Filosofía
+## Noticias y Novedades
+- ** 07/12/2025 Comienzo del proyecto: Hemos iniciado el fork y la creación del repositorio.**
+- ** 08/12/2025 Creación de servidor en Discord: https://discord.gg/eQHHB6SSRU.
+
+## Filosofía
 
 Sentinel llena el vacío entre la estabilidad y la innovación en el ecosistema Flipper Zero:
 
-- **🔐 La seguridad es lo primero**: PIN de coacción, almacenamiento cifrado, registro de auditoría
-- **💻 Fácil de usar para los desarrolladores**: DuckyScript 3.0, MicroPython, macros visuales
-- **📡 Análisis profesional**: analizador de espectro, decodificador de protocolos, demodulación avanzada
-- **⚡ Rendimiento estable**: basado en la probada base Momentum
+- ** La seguridad es lo primero**: PIN de coacción, almacenamiento cifrado, registro de auditoría
+- ** Fácil de usar para los desarrolladores**: DuckyScript 3.0, MicroPython, macros visuales
+- ** Análisis profesional**: analizador de espectro, decodificador de protocolos, demodulación avanzada
+- ** Rendimiento estable**: basado en la probada base Momentum
 
-## 🚀 Características principales
+## Características principales
 
 ### Seguridad y privacidad
 - **PIN de emergencia**: borrado de emergencia en caso de introducción de un PIN comprometido
@@ -43,7 +47,7 @@ Sentinel llena el vacío entre la estabilidad y la innovación en el ecosistema 
 - 8 estilos de interfaz, incluido CoverFlow
 - 183 aplicaciones integradas
 
-## 📥 Instalación
+## Instalación
 
 ### Instalador web (recomendado)
 1. Visite [sentinel-fw.dev](https://alejandropsan.github.io/oscp/flipperzero/Sentinel-firmware.html) (próximamente)
@@ -63,7 +67,7 @@ cd Sentinel-Firmware
 ./fbt flash_usb_full
 ```
 
-## 🗺️ Hoja de ruta
+## Hoja de ruta
 
 - [x] Fase 1: Núcleo de seguridad (PIN de coacción, almacenamiento cifrado, registro de auditoría)
 - [ ] Fase 2: Scripting avanzado (DuckyScript 3.0, MicroPython)
@@ -72,15 +76,15 @@ cd Sentinel-Firmware
 
 Consulte [ROADMAP.md](ROADMAP.md) para ver el calendario detallado.
 
-## 🤝 Contribuciones
+## Contribuciones
 
 Sentinel es de código abierto (GPL-3.0) y agradece las contribuciones.
 
-- 🐛 **Informes de errores**: [Abrir un problema](https://github.com/alejandropsan/Sentinel-Firmware/issues)
-- 💡 **Solicitudes de funciones**: [Discusiones](https://github.com/alejandropsan/Sentinel-Firmware/discussions)
-- 🔧 **Solicitudes de incorporación de cambios**: Consulte [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Informes de errores**: [Abrir un problema](https://github.com/alejandropsan/Sentinel-Firmware/issues)
+- **Solicitudes de funciones**: [Discusiones](https://github.com/alejandropsan/Sentinel-Firmware/discussions)
+- **Solicitudes de incorporación de cambios**: Consulte [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## 📜 Créditos
+## Créditos
 
 Creado sobre la excelente base del [firmware Momentum](https://github.com/Next-Flip/Momentum-Firmware) de WillyJL y su equipo.
 
@@ -90,11 +94,11 @@ Agradecimientos especiales a:
 - Flipper Devices por el increíble hardware
 - Toda la comunidad Flipper
 
-## ⚖️ Licencia
+## Licencia
 
 Licencia GPL-3.0 - Consulte [LICENSE](LICENSE)
 
-## 🔗 Enlaces
+## Enlaces
 
 - **Sitio web**: https://alejandropsan.github.io/oscp/flipper-zero/Sentinel-Firmware.html (próximamente)
 - **Discord**: https://discord.gg/...... (próximamente)
@@ -102,7 +106,7 @@ Licencia GPL-3.0 - Consulte [LICENSE](LICENSE)
 
 ---
 
-**⚠️ Descargo de responsabilidad**: Úselo de forma responsable y ética. Pruébelo solo en dispositivos que sean de su propiedad o para los que tenga permiso explícito para probarlos.
+** Descargo de responsabilidad**: Úselo de forma responsable y ética. Pruébelo solo en dispositivos que sean de su propiedad o para los que tenga permiso explícito para probarlos.
 
 
 
@@ -112,7 +116,7 @@ Licencia GPL-3.0 - Consulte [LICENSE](LICENSE)
 
 ##### INGLÉS // ENGLISH #####
 
-# 🔱 Sentinel Firmware
+# Sentinel Firmware
 
 **Security-focused Flipper Zero firmware with advanced scripting and professional signal analysis**
 
@@ -120,16 +124,20 @@ Licencia GPL-3.0 - Consulte [LICENSE](LICENSE)
 [![License](https://img.shields.io/github/license/alejandropsan/Sentinel-Firmware?color=blue)](https://github.com/alejandropsan/Sentinel-Firmware/blob/dev/LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/alejandropsan/Sentinel-Firmware/total?color=success)](https://github.com/alejandropsan/Sentinel-Firmware/releases)
 
-## 🎯 Philosophy
+## News and Updates
+- ** 07/12/2025 Project start date: We have begun the fork and created the repository.**
+- ** 08/12/2025 Discord server creation: https://discord.gg/eQHHB6SSRU.
+
+## Philosophy
 
 Sentinel fills the gap between stability and innovation in the Flipper Zero ecosystem:
 
-- **🔐 Security First**: Duress PIN, encrypted storage, audit logging
-- **💻 Developer Friendly**: DuckyScript 3.0, MicroPython, visual macros
-- **📡 Professional Analysis**: Spectrum analyzer, protocol decoder, advanced demodulation
+- ** Security First**: Duress PIN, encrypted storage, audit logging
+- ** Developer Friendly**: DuckyScript 3.0, MicroPython, visual macros
+- ** Professional Analysis**: Spectrum analyzer, protocol decoder, advanced demodulation
 - **⚡ Stable Performance**: Built on proven Momentum foundation
 
-## 🚀 Key Features
+## Key Features
 
 ### Security & Privacy
 - **Duress PIN**: Emergency wipe on compromised PIN entry
@@ -155,7 +163,7 @@ Sentinel fills the gap between stability and innovation in the Flipper Zero ecos
 - 8 interface styles including CoverFlow
 - 183 built-in applications
 
-## 📥 Installation
+## Installation
 
 ### Web Installer (Recommended)
 1. Visit [sentinel-fw.dev](https://alejandropsan.github.io/oscp/flipperzero/Sentinel-firmware.html) (coming soon)
@@ -167,7 +175,7 @@ Sentinel fills the gap between stability and innovation in the Flipper Zero ecos
 2. Open qFlipper
 3. Install from file
 
-## 🛠️ Building from Source
+## Building from Source
 
 ```bash
 git clone --recursive https://github.com/alejandropsan/Sentinel-Firmware.git
@@ -175,7 +183,7 @@ cd Sentinel-Firmware
 ./fbt flash_usb_full
 ```
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] Phase 1: Security Core (Duress PIN, Encrypted Storage, Audit Log)
 - [ ] Phase 2: Advanced Scripting (DuckyScript 3.0, MicroPython)
@@ -184,15 +192,15 @@ cd Sentinel-Firmware
 
 See [ROADMAP.md](ROADMAP.md) for detailed timeline.
 
-## 🤝 Contributing
+## Contributing
 
 Sentinel is open source (GPL-3.0) and welcomes contributions!
 
-- 🐛 **Bug Reports**: [Open an issue](https://github.com/alejandropsan/Sentinel-Firmware/issues)
-- 💡 **Feature Requests**: [Discussions](https://github.com/alejandropsan/Sentinel-Firmware/discussions)
-- 🔧 **Pull Requests**: See [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Bug Reports**: [Open an issue](https://github.com/alejandropsan/Sentinel-Firmware/issues)
+- **Feature Requests**: [Discussions](https://github.com/alejandropsan/Sentinel-Firmware/discussions)
+- **Pull Requests**: See [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## 📜 Credits
+## Credits
 
 Built on the excellent foundation of [Momentum Firmware](https://github.com/Next-Flip/Momentum-Firmware) by WillyJL and team.
 
@@ -202,11 +210,11 @@ Special thanks to:
 - Flipper Devices for the amazing hardware
 - The entire Flipper community
 
-## ⚖️ License
+## License
 
 GPL-3.0 License - See [LICENSE](LICENSE)
 
-## 🔗 Links
+## Links
 
 - **Website**: https://alejandropsan.github.io/oscp/flipper-zero/Sentinel-Firmware.html (coming soon)
 - **Discord**: https://discord.gg/...... (coming soon)
@@ -214,4 +222,4 @@ GPL-3.0 License - See [LICENSE](LICENSE)
 
 ---
 
-**⚠️ Disclaimer**: Use responsibly and ethically. Only test on devices you own or have explicit permission to test.
+**Disclaimer**: Use responsibly and ethically. Only test on devices you own or have explicit permission to test.
