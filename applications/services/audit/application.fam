@@ -5,7 +5,7 @@ App(
     targets=["f7"],
     entry_point="audit_srv",
     cdefines=["SRV_AUDIT"],
-    requires=["storage"],
+    requires=["storage", "loader", "desktop"],
     stack_size=2 * 1024,
     order=45,
     sources=["audit.c", "audit_storage.c"],

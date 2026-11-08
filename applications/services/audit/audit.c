@@ -4,6 +4,8 @@
 #include <furi.h>
 #include <furi_hal_rtc.h>
 #include <toolbox/version.h>
+#include <loader/loader.h>
+#include <desktop/desktop.h>
 
 #define TAG "AuditSrv"
 
@@ -17,6 +19,7 @@
 typedef enum {
     AuditMessageTypeEvent,
     AuditMessageTypeStorage, /**< SD card mounted or unmounted */
+    AuditMessageTypeLoader, /**< Loader event, `arg` is the LoaderEventType */
 } AuditMessageType;
 
 typedef struct {
@@ -24,6 +27,7 @@ typedef struct {
     AuditLevel level;
     DateTime datetime;
     uint32_t uptime_ms;
+    uint32_t arg;
     char event[AUDIT_EVENT_SIZE];
     char detail[AUDIT_DETAIL_SIZE];
 } AuditMessage;
@@ -80,10 +84,77 @@ static void audit_storage_event_callback(const void* message, void* context) {
     Audit* audit = context;
     if(event->type == StorageEventTypeCardMount || event->type == StorageEventTypeCardUnmount ||
        event->type == StorageEventTypeCardMountError) {
+        // Written once a card is available again, with the time it happened
+        if(event->type == StorageEventTypeCardMount) {
+            audit_log(audit, AuditLevelInfo, "sd.mount", "%s", "");
+        } else if(event->type == StorageEventTypeCardUnmount) {
+            audit_log(audit, AuditLevelInfo, "sd.unmount", "%s", "");
+        } else {
+            audit_log(audit, AuditLevelWarning, "sd.error", "%s", "");
+        }
         AuditMessage notify = {.type = AuditMessageTypeStorage};
         // If the queue is full the SD state is re-checked on the next event anyway
         furi_message_queue_put(audit->queue, &notify, 0);
     }
+}
+
+static void audit_desktop_event_callback(const void* message, void* context) {
+    const DesktopStatus* status = message;
+    audit_log(
+        context, AuditLevelInfo, status->locked ? "desktop.lock" : "desktop.unlock", "%s", "");
+}
+
+/**
+ * Runs in the loader thread, so the loader API must not be called here: the
+ * app name is looked up later by the audit thread.
+ */
+static void audit_loader_event_callback(const void* message, void* context) {
+    const LoaderEvent* event = message;
+    Audit* audit = context;
+    if(event->type == LoaderEventTypeNoMoreAppsInQueue) return;
+
+    AuditMessage notify = {
+        .type = AuditMessageTypeLoader,
+        .level = AuditLevelInfo,
+        .uptime_ms = furi_get_tick(),
+        .arg = event->type,
+    };
+    furi_hal_rtc_get_datetime(&notify.datetime);
+    if(furi_message_queue_put(audit->queue, &notify, 0) != FuriStatusOk) audit_drop(audit);
+}
+
+/**
+ * Turn a loader notification into an app event. `last_app` remembers the name
+ * of the running app, because it is gone by the time it has stopped.
+ * Returns false when there is nothing to log.
+ */
+static bool audit_loader_message(
+    AuditMessage* message,
+    Loader* loader,
+    FuriString* name,
+    char* last_app,
+    size_t last_app_size) {
+    const char* event = "app.stop";
+    const char* app = last_app;
+    if(message->arg == LoaderEventTypeApplicationBeforeLoad) {
+        // The loader answers after it has started the app, so its name is available.
+        // If not, the load failed (reported separately) or the app already exited.
+        if(!loader_get_application_name(loader, name)) {
+            strlcpy(last_app, "unknown", last_app_size);
+            return false;
+        }
+        strlcpy(last_app, furi_string_get_cstr(name), last_app_size);
+        event = "app.start";
+    } else if(message->arg == LoaderEventTypeApplicationLoadFailed) {
+        message->level = AuditLevelWarning;
+        event = "app.load_failed";
+        app = "";
+    }
+
+    message->type = AuditMessageTypeEvent;
+    strlcpy(message->event, event, sizeof(message->event));
+    snprintf(message->detail, sizeof(message->detail), "name=%s", app);
+    return true;
 }
 
 /** Last crash message, if it points into firmware flash. */
@@ -159,6 +230,15 @@ int32_t audit_srv(void* p) {
     furi_record_create(RECORD_AUDIT, audit);
     audit_log_start(audit);
 
+    // These services start after this one: wait for them (events stay queued meanwhile)
+    Loader* loader = furi_record_open(RECORD_LOADER);
+    furi_pubsub_subscribe(loader_get_pubsub(loader), audit_loader_event_callback, audit);
+    Desktop* desktop = furi_record_open(RECORD_DESKTOP);
+    furi_pubsub_subscribe(
+        desktop_api_get_status_pubsub(desktop), audit_desktop_event_callback, audit);
+    FuriString* app_name = furi_string_alloc();
+    char last_app[32] = "unknown";
+
     bool opened = false;
     AuditMessage message;
 
@@ -170,7 +250,13 @@ int32_t audit_srv(void* p) {
         do {
             if(message.type == AuditMessageTypeStorage) {
                 opened = false; // card changed: restore the chain again
-            } else if(pending_count < AUDIT_PENDING_SIZE) {
+                continue;
+            }
+            if(message.type == AuditMessageTypeLoader &&
+               !audit_loader_message(&message, loader, app_name, last_app, sizeof(last_app))) {
+                continue;
+            }
+            if(pending_count < AUDIT_PENDING_SIZE) {
                 pending[pending_count++] = message;
             } else {
                 audit_drop(audit);
