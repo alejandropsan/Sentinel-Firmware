@@ -139,8 +139,10 @@ Bubble slots: 0
 
 Asset packs are compiled using:
 ```bash
-./fbt icons proto dolphin_internal dolphin_blocking dolphin_ext resources
+./fbt FORCE=1 updater_package   # or: ./fbt FORCE=1 asset_packs
 ```
+
+`FORCE=1` is required: without it fbt does not recompile asset packs after frames change.
 
 Compiled packs are placed in: `SD/asset_packs/` on the device
 
@@ -148,7 +150,7 @@ Compiled packs are placed in: `SD/asset_packs/` on the device
 
 1. Build firmware with asset pack
 2. Flash to device or copy to SD card
-3. Navigate to: **Settings → Desktop → Dolphin**
+3. Navigate to: **Momentum → Interface → Graphics → Asset Pack**
 4. Select the asset pack
 
 ## Next Steps for Sentinel Pack
@@ -157,6 +159,7 @@ To create a complete Sentinel asset pack, you need:
 
 1. **Create Animations** (minimum 1-3):
    - Design 128x64 monochrome PNG frames
+   - Keep each animation under ~40 KB of compiled frames (all frames are loaded into RAM at once)
    - Create meta.txt with frame sequences
    - Add to manifest.txt
 

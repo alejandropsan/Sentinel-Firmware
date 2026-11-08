@@ -11,18 +11,22 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Añadido
 - Bifurcación inicial del firmware Momentum mntm-011.
-- Marca Sentinel y paquete de activos.
+- Marca Sentinel (`FIRMWARE_ORIGIN = "Sentinel"`).
+- Asset pack Sentinel con 3 animaciones (Scanning, Secure, Security) e iconos propios.
+- Iconos Sentinel en el menú principal (`A_Sentinel_14`) y en el menú de bloqueo (`CC_Sentinel_16x16`), que sustituyen a los de Momentum.
 - Canalización CI/CD con GitHub Actions.
 - Hoja de ruta del proyecto y estructura de la documentación.
+- Guías para el desarrollo asistido por IA (`CLAUDE.md`, `AGENTS.md`).
 
-### Seguridad
-- Base para el sistema PIN de coacción.
-- Planificación de la arquitectura de almacenamiento cifrado.
+### Corregido
+- Cuelgue al arrancar (`out of memory` / `NULL pointer dereference`) con el pack Sentinel: las animaciones se reducen de 128 a 64 fotogramas para no superar ~37 KB de RAM cada una.
+- La compilación fallaba al generar los iconos porque había imágenes de distinto tamaño en `Sentinel_14`.
+- Estado de símbolos no válido en `targets/f7/api_symbols.csv`.
+- `meta.txt` de la animación `Sentinel_Security` con formato inválido.
+- `lint_img` fallaba por el logo del README, que se ha movido a `.github/assets/`.
 
-### Desarrollador
-- Configuración del entorno de desarrollo.
-- Configuración del sistema de compilación
-- Estructura de código para nuevas funciones
+### Cambiado
+- La documentación (ReadMe, ROADMAP) refleja el estado real: las funciones de seguridad están planificadas, todavía no implementadas.
 
 ---
 
@@ -52,18 +56,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial fork from Momentum Firmware mntm-011
-- Sentinel branding and Asset Pack
+- Sentinel branding (`FIRMWARE_ORIGIN = "Sentinel"`)
+- Sentinel asset pack with 3 animations (Scanning, Secure, Security) and custom icons
+- Sentinel icons in the main menu (`A_Sentinel_14`) and lock menu (`CC_Sentinel_16x16`), replacing the Momentum ones
 - CI/CD pipeline with GitHub Actions
 - Project roadmap and documentation structure
+- Guides for AI-assisted development (`CLAUDE.md`, `AGENTS.md`)
 
-### Security
-- Foundation for Duress PIN system
-- Encrypted storage architecture planning
+### Fixed
+- Boot crash (`out of memory` / `NULL pointer dereference`) with the Sentinel pack: animations reduced from 128 to 64 frames so each one stays under ~37 KB of RAM
+- Build failed during icon generation because `Sentinel_14` contained images of different sizes
+- Invalid symbol status in `targets/f7/api_symbols.csv`
+- Invalid `meta.txt` format in the `Sentinel_Security` animation
+- `lint_img` failed because of the README logo, now moved to `.github/assets/`
 
-### Developer
-- Development environment setup
-- Build system configuration
-- Code structure for new features
+### Changed
+- Documentation (ReadMe, ROADMAP) reflects the real status: security features are planned, not implemented yet
 
 ---
 

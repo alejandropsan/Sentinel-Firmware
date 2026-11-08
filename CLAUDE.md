@@ -54,6 +54,10 @@ Each test suite is a `PLUGIN` app under `applications/debug/unit_tests/tests/<na
 - `./install_assets.sh` copies it to `assets/packs/Sentinel/`, which is what the build actually compiles
 - `generate_sentinel_assets.py` / `generate_sentinel_icons*.py` generate frames and icons procedurally (PIL). `diagnose_animations.py` and `visualize_sentinel_animations.py` check the frames and render previews (GIF and contact sheet).
 - Frames must be 1-bit monochrome 128x64 PNGs. The frame count in `meta.txt` must match the files on disk.
+- The desktop loads every frame of the active animation into RAM. Keep each animation under ~40 KB of compiled `.bm` frames, or the device crashes at boot (`out of memory`).
+- fbt only recompiles asset packs with `FORCE=1` (`./fbt FORCE=1 updater_package`). Otherwise stale frames ship silently.
+- `generate_sentinel_assets.py` still generates the old v1 `*_128x64` animations, not the current ones.
+- Original artwork and full-length animations live in `asset_pack_sentinel/_originals/` (gitignored). Keep them out of `assets/`.
 - The pack must be selected on the device before it is used. See ANIMACIONES_DIAGNOSTICO.md for how to select it and for "failed to load animation" troubleshooting.
 
 ## Conventions
