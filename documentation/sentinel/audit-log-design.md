@@ -12,7 +12,7 @@ de coacción y el almacenamiento cifrado.
 ### Alcance de la v1
 - Servicio de firmware que recibe eventos y los escribe en la SD sin bloquear a quien los emite.
 - Eventos del sistema: arranque, bloqueo y desbloqueo, PIN, apps, SD y sesiones RPC.
-- Formato CSV legible, con niveles, marca de tiempo y cadena de hashes.
+- Formato CSV legible, con niveles, marca de tiempo y una cadena MAC con la clave del dispositivo.
 - Rotación de archivos con un tamaño máximo.
 - Comandos CLI para leer, verificar, exportar y borrar el registro.
 
@@ -28,7 +28,7 @@ de coacción y el almacenamiento cifrado.
 |---|---|
 | Alguien usa el Flipper desbloqueado sin permiso | Sí: quedan registradas las apps y las sesiones RPC/qFlipper |
 | Intentos de adivinar el PIN | Sí: cada fallo queda registrado, con el contador |
-| Alguien edita o borra líneas del registro desde otro equipo | **Se detecta** con la cadena de hashes (`audit verify`), pero no se impide |
+| Alguien edita o borra líneas del registro desde otro equipo | **Se detecta** con la cadena MAC (`audit verify`), pero no se impide. Sin la clave del dispositivo no se pueden recalcular los valores |
 | Alguien borra el archivo entero o formatea la SD | No se detecta en la v1; ver el anclaje en RTC (sección 9) |
 | Alguien lee el registro sacando la SD | No se impide: el registro va en texto plano hasta que exista el cifrado |
 
@@ -75,9 +75,12 @@ seq,time,uptime_ms,level,event,detail,chain
   así que también se guarda `uptime_ms`.
 - `detail`: texto libre, de 96 bytes como máximo. Las comas, comillas y saltos de línea se sustituyen
   por `_`, de modo que nunca hay que escapar nada.
-- `chain`: los primeros 16 caracteres hexadecimales del
-  `SHA-256(chain_anterior || línea_sin_chain)` (mbedTLS ya está en `lib/`). La primera línea de cada
-  archivo encadena con el último `chain` del archivo anterior.
+- `chain`: los primeros 16 caracteres hexadecimales de un **CBC-MAC con AES por hardware y la clave
+  única del dispositivo** (ranura `FURI_HAL_CRYPTO_ENCLAVE_UNIQUE_KEY_SLOT` del enclave seguro), calculado
+  sobre `longitud (32 bits) || chain_anterior || línea_sin_chain`. El prefijo de longitud hace seguro el
+  CBC-MAC con mensajes de longitud variable. La primera línea de cada archivo encadena con el último
+  `chain` del archivo anterior. Si la clave no está disponible, `chain` vale `xxxxxxxxxxxxxxxx`.
+  Solo se puede verificar en el propio Flipper.
 
 La primera línea de cada archivo es una cabecera con la versión del formato:
 
@@ -106,7 +109,7 @@ applications/services/audit/
 ├── application.fam      # SERVICE "audit", record RECORD_AUDIT
 ├── audit.h              # API interna del firmware
 ├── audit.c              # hilo, cola, suscripciones a pubsub
-├── audit_storage.c      # formato, cadena de hashes, rotación
+├── audit_storage.c      # formato, cadena MAC, rotación
 └── audit_cli.c          # comandos CLI (plugin, como cli_neofetch)
 ```
 
@@ -115,9 +118,12 @@ applications/services/audit/
   perdidos. Así se puede llamar desde el escritorio o el RPC sin riesgo de interbloqueos.
 - Para los cambios en código de upstream, un helper `sentinel_audit(...)` comprueba primero si el
   servicio existe (`furi_record_exists`). Con el servicio desactivado, esas líneas no hacen nada.
-- **Presupuesto de RAM**: unos 6 KB en total (pila de 2 KB, cola de 32 entradas de unos 100 B y el búfer
-  de arranque). Después del problema de memoria con las animaciones, se medirá el heap libre antes y
-  después con el log de depuración.
+- **Presupuesto de RAM** (medido en la v1): unos 7 KB. Pila de 2 KB (usa ~1 KB como máximo), cola de 16
+  mensajes y búfer de arranque de 16 mensajes de 148 B cada uno.
+- **Presupuesto de flash** (medido en la v1): +2,8 KB. Quedan unos 2,4 KB libres antes del radio stack
+  (límite 880.640 bytes). Es la restricción principal de la Fase 1: el resto de funciones tendrá que
+  liberar flash (por ejemplo, sacando apps del firmware a la SD) o vivir en plugins de la SD.
+- Los comandos `audit` son un plugin de la CLI que se carga desde la SD (no ocupa flash).
 
 ### Cambios en código de upstream (deben ser mínimos)
 - `applications/services/desktop/scenes/desktop_scene_pin_input.c`: `pin.ok` y `pin.fail`.
@@ -142,7 +148,7 @@ Comandos CLI:
 
 ```
 audit tail [n]        # últimos n eventos (20 por defecto)
-audit verify          # comprueba la cadena de hashes de todos los archivos
+audit verify          # comprueba la cadena MAC de todos los archivos (solo en el propio Flipper)
 audit export          # vuelca todos los archivos en orden, en CSV
 audit clear           # borra el registro; la primera línea del archivo nuevo es audit.cleared
 audit level <nivel>   # cambia min_level y registra audit.config
@@ -184,7 +190,7 @@ audit level <nivel>   # cambia min_level y registra audit.config
    `audit.*`. Incluye los tests unitarios del formato y la rotación.
 2. Eventos por pubsub: escritorio, loader y SD.
 3. Cambios mínimos en upstream: PIN y RPC.
-4. Cadena de hashes y `audit verify`.
+4. `audit verify` (la cadena MAC ya se escribe desde el PR 1).
 5. Ajustes en archivo y `audit level` / `audit clear`.
 
 ## 12. Decisiones (08/11/2026)
@@ -195,3 +201,4 @@ audit level <nivel>   # cambia min_level y registra audit.config
 | 2 | ¿Texto plano en la v1? | **Sí**, dejándolo documentado | Permite probar el registro ya. El formato no cambiará con el cifrado. Lo que revela ya se deduce de los demás archivos de la SD |
 | 3 | ¿Anclaje en el RTC? | **En la v1.1** | Solo quedan unos 10 registros libres del RTC. Se repartirán junto con el PIN de coacción y el arranque seguro |
 | 4 | ¿Dónde va la interfaz de ajustes? | **App propia "Sentinel Security"**, creada con el PIN de coacción. En la v1, solo CLI | Sin conflictos con upstream. Reunirá los ajustes de toda la Fase 1 |
+| 5 | ¿Cómo se calcula `chain`? (08/11/2026, durante el PR 1) | **CBC-MAC con AES por hardware y la clave única del dispositivo**, en lugar de SHA-256 | SHA-256 no está en el firmware y costaba 2,6 KB de flash. Además, una cadena sin clave se puede recalcular tras editar el registro, así que no protegía frente a un atacante |
