@@ -72,3 +72,7 @@ node_modules/
 # cli_perf script output in case of errors
 /block.bin
 /return_block.bin
+
+# Sentinel: originales de arte (fuera del build) y estado local del editor
+/asset_pack_sentinel/_originals/
+/.maxiwatt/

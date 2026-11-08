@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/images/Sentinel-firmware-logo.png" alt="Sentinel Firmware Logo" width="800"/>
+<img src=".github/assets/Sentinel-firmware-logo.png" alt="Sentinel Firmware Logo" width="800"/>
 
 ##### ESPAÑOL // SPANISH #####
 
