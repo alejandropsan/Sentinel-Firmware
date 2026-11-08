@@ -3,7 +3,7 @@
 **Professional Tactical Theme for Flipper Zero**
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Status](https://img.shields.io/badge/status-ready-green)
+![Status](https://img.shields.io/badge/status-pre--alpha-orange)
 ![Animations](https://img.shields.io/badge/animations-3-orange)
 ![Icons](https://img.shields.io/badge/icons-17-purple)
 
@@ -26,23 +26,12 @@ The **Sentinel Asset Pack** is a professionally designed theme for Flipper Zero,
 
 ### Animations (3 Custom)
 
-1. **Sentinel_Scanning_128x64** (60 frames, 12 fps)
-   - Tactical dolphin with rotating radar scanner
-   - Animated scanning lines
-   - Perfect for: Low to moderate mood states
-   - Theme: Active reconnaissance and analysis
+1. **Sentinel_Scanning** (64 frames, 4 fps): shown at low mood levels (max butthurt 6)
+2. **Sentinel_Secure** (64 frames, 4 fps): shown at all mood levels (max butthurt 18)
+3. **Sentinel_Security** (64 frames, 5 fps): shown at low to moderate mood levels (max butthurt 14)
 
-2. **Sentinel_Hacking_128x64** (48 frames, 10 fps)
-   - Dolphin at terminal with scrolling code
-   - Blinking cursor effect
-   - Perfect for: Moderate mood states
-   - Theme: Active coding and exploitation
-
-3. **Sentinel_Secure_128x64** (40 frames, 8 fps)
-   - Dolphin protected by pulsing security shield
-   - Corner security indicators
-   - Perfect for: All mood states
-   - Theme: Protection and security posture
+> Each animation must stay under ~40 KB of compiled frames: the desktop loads every frame into RAM.
+> See [ANIMACIONES_DIAGNOSTICO.md](../ANIMACIONES_DIAGNOSTICO.md).
 
 ### Icons (17 Custom)
 
@@ -92,8 +81,8 @@ cd Sentinel-Firmware
 # 2. Run installation script
 ./install_assets.sh
 
-# 3. Build firmware with asset pack
-./fbt updater_package
+# 3. Build firmware with asset pack (FORCE=1 recompiles asset packs)
+./fbt FORCE=1 updater_package
 
 # 4. Flash to device
 ./fbt flash_usb_full
@@ -102,42 +91,36 @@ cd Sentinel-Firmware
 ### Manual Installation
 
 ```bash
-# 1. Copy asset pack to packs directory
+# 1. Copy asset pack to packs directory (replace Anims entirely)
+rm -rf assets/packs/Sentinel/Anims
 cp -r asset_pack_sentinel/Anims assets/packs/Sentinel/
 cp -r asset_pack_sentinel/Icons assets/packs/Sentinel/
 
 # 2. Build and flash
-./fbt updater_package
+./fbt FORCE=1 updater_package
 ./fbt flash_usb_full
 ```
 
 ### Activating on Device
 
-1. On your Flipper Zero, navigate to: **Settings → Desktop → Dolphin**
-2. Select **Sentinel** from the available asset packs
-3. Restart for full effect (optional but recommended)
+1. On your Flipper Zero, navigate to: **Momentum → Interface → Graphics → Asset Pack**
+2. Select **Sentinel**
+3. Restart if prompted
 
 ---
 
 ## 🛠️ Regenerating Assets
 
-If you want to modify or regenerate the asset pack:
+> ⚠️ `generate_sentinel_assets.py` generates the **old v1 animations** (`*_128x64`), not the current ones,
+> and they are not listed in the current `manifest.txt`. Use it only to regenerate the icons, and check
+> the result before committing.
+
+After changing any asset:
 
 ```bash
-# Run the asset generator
-python3 generate_sentinel_assets.py
-
-# Reinstall
 ./install_assets.sh
-
-# Rebuild firmware
-./fbt updater_package
+./fbt FORCE=1 updater_package
 ```
-
-The generator script creates:
-- 148 animation frames (60 + 48 + 40)
-- 17 tactical icons across 6 categories
-- All required manifest and metadata files
 
 ---
 
@@ -145,13 +128,13 @@ The generator script creates:
 
 ### Animations
 
-| Animation | Frames | FPS | Duration | Resolution | Size |
-|-----------|--------|-----|----------|------------|------|
-| Scanning  | 60     | 12  | 360s     | 128x64     | ~29KB |
-| Hacking   | 48     | 10  | 360s     | 128x64     | ~23KB |
-| Secure    | 40     | 8   | 360s     | 128x64     | ~19KB |
+| Animation | Frames | FPS | Duration | Resolution | RAM when loaded |
+|-----------|--------|-----|----------|------------|-----------------|
+| Scanning  | 64     | 4   | 360s     | 128x64     | ~36.5KB |
+| Secure    | 64     | 4   | 360s     | 128x64     | ~23KB   |
+| Security  | 64     | 5   | 360s     | 128x64     | ~37KB   |
 
-**Total Animation Storage**: ~71KB (148 frames)
+Only the active animation is loaded into RAM, so the per-animation size is what matters (keep it under ~40 KB).
 
 ### Icons
 
@@ -166,7 +149,7 @@ The generator script creates:
 
 **Total Icon Storage**: ~38KB (17 icons)
 
-**Total Asset Pack Size**: ~109KB
+**Total Asset Pack Size**: ~98KB on the SD card (compiled `.bm`/`.bmx` files)
 
 ---
 
@@ -200,15 +183,15 @@ asset_pack_sentinel/
 │
 ├── Anims/                              # Animations
 │   ├── manifest.txt                    # Animation manifest
-│   ├── Sentinel_Scanning_128x64/
+│   ├── Sentinel_Scanning/
 │   │   ├── meta.txt
-│   │   └── frame_*.png (60 frames)
-│   ├── Sentinel_Hacking_128x64/
+│   │   └── frame_*.png (64 frames)
+│   ├── Sentinel_Secure/
 │   │   ├── meta.txt
-│   │   └── frame_*.png (48 frames)
-│   └── Sentinel_Secure_128x64/
+│   │   └── frame_*.png (64 frames)
+│   └── Sentinel_Security/
 │       ├── meta.txt
-│       └── frame_*.png (40 frames)
+│       └── frame_*.png (64 frames)
 │
 ├── Icons/                              # Icons
 │   ├── Dolphin/                        # 5 icons
@@ -299,10 +282,10 @@ This asset pack is part of the Sentinel Firmware project and is licensed under G
 
 ### Version 1.0.0 (Current)
 
-**Released**: December 2024
+**Status**: not released yet (part of Sentinel pre-alpha). Animations reworked in November 2026.
 
 **Features**:
-- ✅ 3 custom tactical animations (148 total frames)
+- ✅ 3 custom tactical animations (64 frames each)
 - ✅ 17 professional icons across 6 categories
 - ✅ Complete manifest and metadata files
 - ✅ Automated installation script
