@@ -16,6 +16,7 @@
 #define AUDIT_CLI_MAX_FILES 10 /**< Scan audit.9.csv ... audit.csv */
 #define AUDIT_TAIL_DEFAULT  20
 #define AUDIT_TAIL_MAX      100
+#define AUDIT_VERIFY_REPORT 20 /**< Problems printed in detail */
 
 typedef void (*AuditCliLineCallback)(FuriString* line, void* context);
 
@@ -124,10 +125,105 @@ static void audit_cli_export(PipeSide* pipe) {
     }
 }
 
+typedef struct {
+    AuditChain chain;
+    bool started;
+    uint32_t first_seq;
+    uint32_t checked;
+    uint32_t problems;
+} AuditCliVerify;
+
+static void audit_cli_verify_problem(AuditCliVerify* verify, const char* format, ...) {
+    verify->problems++;
+    if(verify->problems > AUDIT_VERIFY_REPORT) return;
+    // vprintf is not exported to plugins
+    FuriString* text = furi_string_alloc();
+    va_list args;
+    va_start(args, format);
+    furi_string_vprintf(text, format, args);
+    va_end(args);
+    printf("%s\r\n", furi_string_get_cstr(text));
+    furi_string_free(text);
+}
+
+static void audit_cli_verify_line(FuriString* line, void* context) {
+    AuditCliVerify* verify = context;
+    const char* text = furi_string_get_cstr(line);
+    verify->checked++;
+
+    if(!verify->started) {
+        AuditChain first;
+        if(!audit_parse_line(text, &first)) {
+            audit_cli_verify_problem(verify, "malformed line: %.40s", text);
+            return;
+        }
+        verify->started = true;
+        verify->first_seq = first.seq;
+        if(first.seq != 1) {
+            // Older files were rotated out: this line is the starting point
+            verify->chain = first;
+            return;
+        }
+        audit_chain_reset(&verify->chain);
+    }
+
+    uint32_t expected_seq = verify->chain.seq + 1;
+    switch(audit_verify_line(text, &verify->chain)) {
+    case AuditVerifyOk:
+        break;
+    case AuditVerifyMalformed:
+        audit_cli_verify_problem(verify, "malformed or incomplete line: %.40s", text);
+        break;
+    case AuditVerifySeqGap:
+        audit_cli_verify_problem(
+            verify,
+            "seq %lu: expected %lu (lines missing or reordered)",
+            verify->chain.seq,
+            expected_seq);
+        break;
+    case AuditVerifyMacMismatch:
+        audit_cli_verify_problem(
+            verify,
+            "seq %lu: MAC mismatch (line modified, or key unavailable when written)",
+            verify->chain.seq);
+        break;
+    }
+}
+
+static void audit_cli_verify(PipeSide* pipe) {
+    AuditCliVerify verify = {0};
+    if(!audit_cli_for_each_line(pipe, audit_cli_verify_line, &verify)) {
+        printf("Interrupted\r\n");
+        return;
+    }
+    if(!verify.checked) {
+        printf("Audit log is empty\r\n");
+        return;
+    }
+    if(verify.problems > AUDIT_VERIFY_REPORT) {
+        printf("... and %lu more problems\r\n", verify.problems - AUDIT_VERIFY_REPORT);
+    }
+    printf(
+        "Checked %lu events (seq %lu-%lu)\r\n", verify.checked, verify.first_seq, verify.chain.seq);
+    if(verify.first_seq > 1) {
+        printf(
+            "Note: events before seq %lu are not on the SD card (rotated out or deleted), "
+            "so seq %lu is the starting point and cannot be checked\r\n",
+            verify.first_seq,
+            verify.first_seq);
+    }
+    if(verify.problems) {
+        printf("Result: FAILED (%lu problems)\r\n", verify.problems);
+    } else {
+        printf("Result: OK\r\n");
+    }
+}
+
 static void audit_cli_usage(void) {
     printf("Usage:\r\n");
     printf("audit tail [n]\t - show the last n events (default %d)\r\n", AUDIT_TAIL_DEFAULT);
     printf("audit export\t - print the whole log as CSV, oldest first\r\n");
+    printf("audit verify\t - check the MAC chain (only on the device that wrote it)\r\n");
 }
 
 static void audit_cli_execute(PipeSide* pipe, FuriString* args, void* context) {
@@ -140,6 +236,8 @@ static void audit_cli_execute(PipeSide* pipe, FuriString* args, void* context) {
         audit_cli_tail(pipe, args);
     } else if(furi_string_equal_str(command, "export")) {
         audit_cli_export(pipe);
+    } else if(furi_string_equal_str(command, "verify")) {
+        audit_cli_verify(pipe);
     } else {
         audit_cli_usage();
     }

@@ -137,6 +137,28 @@ bool audit_parse_line(const char* line, AuditChain* chain) {
     return true;
 }
 
+AuditVerifyResult audit_verify_line(const char* line, AuditChain* chain) {
+    furi_check(line && chain);
+
+    AuditChain stored;
+    if(!audit_parse_line(line, &stored)) return AuditVerifyMalformed;
+    // The file comes from the SD card: never trust its length
+    size_t content_len = strrchr(line, ',') - line;
+    if(content_len > AUDIT_LINE_MAX) return AuditVerifyMalformed;
+
+    char expected[AUDIT_CHAIN_LEN + 1];
+    audit_chain_compute(expected, chain->chain, line, content_len);
+
+    AuditVerifyResult result = AuditVerifyOk;
+    if(stored.seq != chain->seq + 1) {
+        result = AuditVerifySeqGap;
+    } else if(strcmp(expected, stored.chain) != 0) {
+        result = AuditVerifyMacMismatch;
+    }
+    *chain = stored;
+    return result;
+}
+
 void audit_file_path(FuriString* path, const char* dir, uint8_t index) {
     furi_check(path && dir);
     if(index == 0) {

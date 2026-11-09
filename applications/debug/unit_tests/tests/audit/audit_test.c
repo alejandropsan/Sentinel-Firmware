@@ -102,6 +102,57 @@ MU_TEST(test_audit_parse_rejects) {
     mu_assert_string_eq("0123456789abcdef", chain.chain);
 }
 
+MU_TEST(test_audit_verify) {
+    FuriString* lines[3];
+    AuditChain writer;
+    audit_chain_reset(&writer);
+    for(size_t i = 0; i < COUNT_OF(lines); i++) {
+        lines[i] = furi_string_alloc();
+        audit_format_line(
+            lines[i], &writer, &audit_test_datetime, i, AuditLevelInfo, "test.event", "detail");
+    }
+
+    // An untouched log verifies line by line
+    AuditChain chain;
+    audit_chain_reset(&chain);
+    for(size_t i = 0; i < COUNT_OF(lines); i++) {
+        mu_assert_int_eq(AuditVerifyOk, audit_verify_line(furi_string_get_cstr(lines[i]), &chain));
+    }
+    mu_assert_int_eq(3, chain.seq);
+
+    // A modified field is detected, and the next line still verifies
+    FuriString* tampered = furi_string_alloc_set(lines[1]);
+    furi_string_replace_str(tampered, "detail", "detaiX", 0);
+    audit_chain_reset(&chain);
+    mu_assert_int_eq(AuditVerifyOk, audit_verify_line(furi_string_get_cstr(lines[0]), &chain));
+    mu_assert_int_eq(
+        AuditVerifyMacMismatch, audit_verify_line(furi_string_get_cstr(tampered), &chain));
+    mu_assert_int_eq(AuditVerifyOk, audit_verify_line(furi_string_get_cstr(lines[2]), &chain));
+
+    // A deleted line is reported as a gap
+    audit_chain_reset(&chain);
+    mu_assert_int_eq(AuditVerifyOk, audit_verify_line(furi_string_get_cstr(lines[0]), &chain));
+    mu_assert_int_eq(AuditVerifySeqGap, audit_verify_line(furi_string_get_cstr(lines[2]), &chain));
+
+    // Garbage and oversized lines are rejected without touching the chain
+    AuditChain before = chain;
+    mu_assert_int_eq(AuditVerifyMalformed, audit_verify_line("garbage", &chain));
+    FuriString* oversized = furi_string_alloc_set("9,");
+    for(size_t i = 0; i < 30; i++) {
+        furi_string_cat_str(oversized, "0123456789");
+    }
+    furi_string_cat_str(oversized, ",0123456789abcdef");
+    mu_assert_int_eq(
+        AuditVerifyMalformed, audit_verify_line(furi_string_get_cstr(oversized), &chain));
+    mu_assert_int_eq(before.seq, chain.seq);
+
+    furi_string_free(oversized);
+    furi_string_free(tampered);
+    for(size_t i = 0; i < COUNT_OF(lines); i++) {
+        furi_string_free(lines[i]);
+    }
+}
+
 MU_TEST(test_audit_rotation_and_restore) {
     Storage* storage = furi_record_open(RECORD_STORAGE);
     storage_simply_remove_recursive(storage, AUDIT_TEST_DIR);
@@ -182,6 +233,7 @@ MU_TEST_SUITE(test_audit_suite) {
     MU_RUN_TEST(test_audit_format_and_parse);
     MU_RUN_TEST(test_audit_chain);
     MU_RUN_TEST(test_audit_parse_rejects);
+    MU_RUN_TEST(test_audit_verify);
     MU_RUN_TEST(test_audit_rotation_and_restore);
     MU_RUN_TEST(test_audit_unterminated_line);
 }

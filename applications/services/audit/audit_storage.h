@@ -70,6 +70,23 @@ void audit_format_line(
  */
 bool audit_parse_line(const char* line, AuditChain* chain);
 
+typedef enum {
+    AuditVerifyOk,
+    AuditVerifyMalformed, /**< Not a valid data line, e.g. cut by power loss */
+    AuditVerifySeqGap, /**< Sequence number does not follow: lines missing or reordered */
+    AuditVerifyMacMismatch, /**< Line modified, or written while the key was unavailable */
+} AuditVerifyResult;
+
+/**
+ * @brief Check one data line against the previous position in the chain.
+ *
+ * Needs the device key, so it only works on the device that wrote the log.
+ * On anything but AuditVerifyMalformed, `chain` moves to the stored values of
+ * this line, so a single modified line is reported once and later lines are
+ * still checked.
+ */
+AuditVerifyResult audit_verify_line(const char* line, AuditChain* chain);
+
 /** @brief Path of log file `index` in `dir` (0 = current file, N = N-th older). */
 void audit_file_path(FuriString* path, const char* dir, uint8_t index);
 

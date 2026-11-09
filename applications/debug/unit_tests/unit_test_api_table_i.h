@@ -63,6 +63,7 @@ static constexpr auto unit_tests_api_table = sort(create_array_t<sym_entry>(
         void,
         (FuriString*, AuditChain*, const DateTime*, uint32_t, AuditLevel, const char*, const char*)),
     API_METHOD(audit_parse_line, bool, (const char*, AuditChain*)),
+    API_METHOD(audit_verify_line, AuditVerifyResult, (const char*, AuditChain*)),
     API_METHOD(audit_file_path, void, (FuriString*, const char*, uint8_t)),
     API_METHOD(audit_storage_alloc, AuditStorage*, (Storage*, const char*, uint32_t, uint8_t)),
     API_METHOD(audit_storage_free, void, (AuditStorage*)),
