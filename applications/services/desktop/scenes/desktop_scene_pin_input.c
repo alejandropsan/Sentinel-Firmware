@@ -13,6 +13,7 @@
 #include "../views/desktop_view_pin_input.h"
 #include "../helpers/pin_code.h"
 #include "desktop_scene.h"
+#include <audit/audit.h>
 
 #define WRONG_PIN_HEADER_TIMEOUT 3000
 #define INPUT_PIN_VIEW_TIMEOUT   15000
@@ -54,10 +55,12 @@ static void desktop_scene_pin_input_done_callback(const DesktopPinCode* pin_code
     Desktop* desktop = (Desktop*)context;
 
     if(desktop_pin_code_check(pin_code)) {
+        sentinel_audit(AuditLevelInfo, "pin.ok", "%s", "");
         view_dispatcher_send_custom_event(desktop->view_dispatcher, DesktopPinInputEventUnlocked);
 
     } else {
         uint32_t pin_fails = furi_hal_rtc_get_pin_fails() + 1;
+        sentinel_audit(AuditLevelWarning, "pin.fail", "count=%lu", pin_fails);
         if(pin_fails >= 10 && momentum_settings.bad_pins_format) {
             Storage* storage = furi_record_open(RECORD_STORAGE);
             storage_sd_format(storage);

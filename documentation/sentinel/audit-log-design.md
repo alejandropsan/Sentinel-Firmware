@@ -49,7 +49,8 @@ Hechos del código que condicionan el diseño:
 | `pin.fail` (con el número de fallos) / `pin.ok` | warning / info | `desktop_scene_pin_input.c` | Sí: 2 líneas |
 | `app.start` / `app.stop` / `app.load_failed` | info | Pubsub del loader | No (ver la nota) |
 | `sd.mount` / `sd.unmount` / `sd.error` | info / warning | Pubsub de almacenamiento | No |
-| `rpc.open` / `rpc.close` (USB, BLE o UART) | warning | `rpc_session_open` / `rpc_session_close` en `rpc.c` | Sí: 2 líneas |
+| `rpc.open` (warning) / `rpc.close` (info), con el origen: USB, BLE o UART | warning / info | `rpc_session_open` / `rpc_session_close` en `rpc.c` | Sí: unas pocas líneas |
+| `rpc.denied`: conexión RPC rechazada con el Flipper bloqueado | warning | `rpc_session_open` | Sí (mismo cambio). En la práctica casi no se dispara: al bloquear, el USB se desactiva y Momentum cierra el RPC por Bluetooth salvo que "Allow BLE RPC While Locked" esté activado |
 | `audit.start`, `audit.rotate`, `audit.cleared`, `audit.dropped`, `audit.config` | info / warning | El propio servicio | No |
 
 **Nota sobre el loader.** `LoaderEvent` solo lleva el tipo de evento, no el nombre de la app. Además, los
