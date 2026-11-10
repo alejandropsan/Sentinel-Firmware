@@ -14,6 +14,7 @@ static const char* const audit_level_names[AuditLevelCount] = {
     "info",
     "warning",
     "critical",
+    "off",
 };
 
 struct AuditStorage {
@@ -46,6 +47,15 @@ void audit_sanitize(char* text) {
 
 const char* audit_level_name(AuditLevel level) {
     return level < AuditLevelCount ? audit_level_names[level] : "unknown";
+}
+
+AuditLevel audit_level_from_name(const char* name) {
+    furi_check(name);
+    AuditLevel level = 0;
+    while(level < AuditLevelCount && strcmp(name, audit_level_names[level]) != 0) {
+        level++;
+    }
+    return level;
 }
 
 /**
@@ -368,6 +378,27 @@ bool audit_storage_write(
     }
 
     return audit_storage_write_line(instance, datetime, uptime_ms, level, event, detail);
+}
+
+bool audit_storage_clear(AuditStorage* instance, uint8_t* removed) {
+    furi_check(instance && removed);
+    audit_storage_end(instance);
+    instance->needs_newline = false;
+    *removed = 0;
+
+    // Up to the highest possible index, in case max_files was lowered
+    bool ok = true;
+    for(uint8_t i = 0; i < AUDIT_MAX_FILES; i++) {
+        audit_file_path(instance->path, furi_string_get_cstr(instance->dir), i);
+        FS_Error error =
+            storage_common_remove(instance->storage, furi_string_get_cstr(instance->path));
+        if(error == FSE_OK) {
+            (*removed)++;
+        } else if(error != FSE_NOT_EXIST) {
+            ok = false;
+        }
+    }
+    return ok;
 }
 
 const AuditChain* audit_storage_get_chain(AuditStorage* instance) {

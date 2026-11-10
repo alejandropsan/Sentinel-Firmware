@@ -29,12 +29,14 @@
   - [ ] Derivación de claves basada en contraseña (PBKDF2)
   - [ ] Cifrado/descifrado transparente
 
-- [ ] **Registro de auditoría**
-  - [ ] Niveles de registro configurables
-  - [ ] Marca de tiempo en todas las operaciones
-  - [ ] Exportación a CSV
-  - [ ] Registro remoto a través de WiFi
-  - [ ] Rotación y límites de registros
+- [x] **Registro de auditoría** (v1; diseño en `documentation/sentinel/audit-log-design.md`)
+  - [x] Niveles de registro configurables (`audit level`)
+  - [x] Marca de tiempo en todas las operaciones
+  - [x] Exportación a CSV (`audit export`)
+  - [x] Cadena MAC con la clave del dispositivo para detectar manipulaciones (`audit verify`)
+  - [x] Rotación y límites de registros
+  - [ ] Registro remoto a través de WiFi (v2)
+  - [ ] Cifrado del registro (llegará con el almacenamiento cifrado)
 
 - [ ] **Arranque seguro**
   - [ ] Verificación de la suma de comprobación del firmware
@@ -229,12 +231,14 @@
   - [ ] Password-based key derivation (PBKDF2)
   - [ ] Transparent encryption/decryption
 
-- [ ] **Audit Logging**
-  - [ ] Configurable logging levels
-  - [ ] Timestamp all operations
-  - [ ] Export to CSV
-  - [ ] Remote logging via WiFi
-  - [ ] Log rotation and limits
+- [x] **Audit Logging** (v1; design in `documentation/sentinel/audit-log-design.md`)
+  - [x] Configurable logging levels (`audit level`)
+  - [x] Timestamp all operations
+  - [x] Export to CSV (`audit export`)
+  - [x] MAC chain with the device key to detect tampering (`audit verify`)
+  - [x] Log rotation and limits
+  - [ ] Remote logging via WiFi (v2)
+  - [ ] Log encryption (comes with encrypted storage)
 
 - [ ] **Secure Boot**
   - [ ] Firmware checksum verification

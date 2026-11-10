@@ -17,6 +17,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 - Canalización CI/CD con GitHub Actions.
 - Hoja de ruta del proyecto y estructura de la documentación.
 - Guías para el desarrollo asistido por IA (`CLAUDE.md`, `AGENTS.md`).
+- **Registro de auditoría** (Fase 1): servicio `audit` que guarda en `/ext/.sentinel/audit/` los arranques, bloqueos y desbloqueos, PIN correctos y fallidos, apps, cambios de la SD y sesiones RPC (USB y Bluetooth). Cada línea lleva un MAC encadenado con la clave única del dispositivo, para detectar modificaciones y huecos. Comandos CLI `audit tail`, `audit export`, `audit verify`, `audit level` y `audit clear`. Ajustes en `audit.settings`. Diseño en `documentation/sentinel/audit-log-design.md`.
+- API del registro de auditoría exportada para las apps (`audit.h`); versión de la API 87.2.
 
 ### Corregido
 - Cuelgue al arrancar (`out of memory` / `NULL pointer dereference`) con el pack Sentinel: las animaciones se reducen de 128 a 64 fotogramas para no superar ~37 KB de RAM cada una.
@@ -24,6 +26,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 - Estado de símbolos no válido en `targets/f7/api_symbols.csv`.
 - `meta.txt` de la animación `Sentinel_Security` con formato inválido.
 - `lint_img` fallaba por el logo del README, que se ha movido a `.github/assets/`.
+- Los tests unitarios heredados de Momentum no compilaban (`test_runner.c` y la tabla de API de los tests).
 
 ### Cambiado
 - La documentación (ReadMe, ROADMAP) refleja el estado real: las funciones de seguridad están planificadas, todavía no implementadas.
@@ -62,6 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD pipeline with GitHub Actions
 - Project roadmap and documentation structure
 - Guides for AI-assisted development (`CLAUDE.md`, `AGENTS.md`)
+- **Audit log** (Phase 1): `audit` service that records boots, lock and unlock, correct and failed PINs, apps, SD card changes and RPC sessions (USB and Bluetooth) in `/ext/.sentinel/audit/`. Each line carries a chained MAC made with the device unique key, so edits and gaps are detected. CLI commands `audit tail`, `audit export`, `audit verify`, `audit level` and `audit clear`. Settings in `audit.settings`. Design in `documentation/sentinel/audit-log-design.md`
+- Audit log API exported to apps (`audit.h`); API version 87.2
 
 ### Fixed
 - Boot crash (`out of memory` / `NULL pointer dereference`) with the Sentinel pack: animations reduced from 128 to 64 frames so each one stays under ~37 KB of RAM
@@ -69,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Invalid symbol status in `targets/f7/api_symbols.csv`
 - Invalid `meta.txt` format in the `Sentinel_Security` animation
 - `lint_img` failed because of the README logo, now moved to `.github/assets/`
+- Unit tests inherited from Momentum did not build (`test_runner.c` and the test API table)
 
 ### Changed
 - Documentation (ReadMe, ROADMAP) reflects the real status: security features are planned, not implemented yet

@@ -3,8 +3,8 @@
  * @brief Audit log file format, hash chain and rotation (firmware internal).
  *
  * Line format: `seq,time,uptime_ms,level,event,detail,chain\n`
- * where chain = first 8 bytes (16 hex chars) of
- * SHA-256(previous_chain || line_without_chain).
+ * where chain = first 8 bytes (16 hex chars) of a CBC-MAC with the device
+ * unique key over previous_chain || line_without_chain.
  */
 #pragma once
 
@@ -21,6 +21,13 @@ extern "C" {
 #define AUDIT_DIR                   EXT_PATH(".sentinel/audit")
 #define AUDIT_DEFAULT_MAX_FILE_SIZE (64 * 1024)
 #define AUDIT_DEFAULT_MAX_FILES     4
+#define AUDIT_MAX_FILES             10 /**< Upper limit of max_files: audit.9.csv ... audit.csv */
+#define AUDIT_MIN_FILE_KB           4
+#define AUDIT_MAX_FILE_KB           1024
+
+#define AUDIT_SETTINGS_PATH    AUDIT_DIR "/audit.settings"
+#define AUDIT_SETTINGS_TYPE    "Sentinel Audit Settings"
+#define AUDIT_SETTINGS_VERSION 1
 
 #define AUDIT_EVENT_SIZE  24 /**< Event identifier buffer, including terminator */
 #define AUDIT_DETAIL_SIZE 97 /**< Detail buffer, including terminator */
@@ -46,8 +53,28 @@ void audit_chain_reset(AuditChain* chain);
  */
 void audit_sanitize(char* text);
 
-/** @brief Lowercase name of a level ("debug", "info", "warning", "critical"). */
+/** @brief Lowercase name of a level ("debug", "info", "warning", "critical", "off"). */
 const char* audit_level_name(AuditLevel level);
+
+/** @brief Level from its name, or AuditLevelCount if the name is unknown. */
+AuditLevel audit_level_from_name(const char* name);
+
+/** Contents of audit.settings. */
+typedef struct {
+    AuditLevel min_level;
+    uint32_t max_file_kb;
+    uint8_t max_files;
+} AuditSettings;
+
+/**
+ * @brief Read audit.settings (normally AUDIT_SETTINGS_PATH).
+ *
+ * Missing file, missing keys and out-of-range values fall back to the defaults.
+ */
+void audit_settings_load(Storage* storage, const char* path, AuditSettings* settings);
+
+/** @brief Write audit.settings. The directory must exist. */
+bool audit_settings_save(Storage* storage, const char* path, const AuditSettings* settings);
 
 /**
  * @brief Format one log line (ending in '\n') and advance the chain.
@@ -129,6 +156,16 @@ bool audit_storage_write(
 
 /** @brief Close the current log file. */
 void audit_storage_end(AuditStorage* instance);
+
+/**
+ * @brief Delete audit.csv and every older file, keeping seq and the chain.
+ *
+ * The next audit_storage_begin() starts a new file with a header.
+ *
+ * @param removed number of files deleted
+ * @return false if a file could not be removed
+ */
+bool audit_storage_clear(AuditStorage* instance, uint8_t* removed);
 
 /** @brief Current position in the chain. */
 const AuditChain* audit_storage_get_chain(AuditStorage* instance);

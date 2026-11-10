@@ -91,7 +91,7 @@ En el Flipper: **Momentum → Interface → Graphics → Asset Pack → Sentinel
 ## Hoja de ruta
 
 - [x] Fase 0: Fork, marca, CI y asset pack Sentinel
-- [ ] Fase 1: Núcleo de seguridad (PIN de coacción, almacenamiento cifrado, registro de auditoría): **siguiente fase, sin empezar**
+- [ ] Fase 1: Núcleo de seguridad (PIN de coacción, almacenamiento cifrado, registro de auditoría): **en curso**. Registro de auditoría hecho; el resto, sin empezar
 - [ ] Fase 2: Scripting avanzado (DuckyScript 3.0, MicroPython)
 - [ ] Fase 3: Análisis de señales (analizador de espectro, decodificador de protocolos)
 - [ ] Fase 4: Comunidad y pulido
@@ -223,7 +223,7 @@ On the Flipper: **Momentum → Interface → Graphics → Asset Pack → Sentine
 ## Roadmap
 
 - [x] Phase 0: Fork, branding, CI and Sentinel asset pack
-- [ ] Phase 1: Security Core (Duress PIN, Encrypted Storage, Audit Log): **next phase, not started**
+- [ ] Phase 1: Security Core (Duress PIN, Encrypted Storage, Audit Log): **in progress**. Audit log done; the rest not started
 - [ ] Phase 2: Advanced Scripting (DuckyScript 3.0, MicroPython)
 - [ ] Phase 3: Signal Analysis (Spectrum Analyzer, Protocol Decoder)
 - [ ] Phase 4: Community & Polish

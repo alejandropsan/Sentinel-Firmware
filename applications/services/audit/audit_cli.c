@@ -2,7 +2,8 @@
  * @file audit_cli.c
  * @brief `audit` CLI command (plugin loaded from the SD card).
  *
- * Reads the log files directly; it does not talk to the audit service.
+ * tail, export and verify read the log files directly. level and clear go
+ * through the audit service API.
  */
 #include "audit_storage.h"
 
@@ -13,7 +14,6 @@
 #include <toolbox/cli/cli_command.h>
 
 #define AUDIT_CLI_APPID     "cli"
-#define AUDIT_CLI_MAX_FILES 10 /**< Scan audit.9.csv ... audit.csv */
 #define AUDIT_TAIL_DEFAULT  20
 #define AUDIT_TAIL_MAX      100
 #define AUDIT_VERIFY_REPORT 20 /**< Problems printed in detail */
@@ -34,7 +34,7 @@ static bool audit_cli_for_each_line(PipeSide* pipe, AuditCliLineCallback callbac
     char buffer[64];
     bool completed = true;
 
-    for(int8_t index = AUDIT_CLI_MAX_FILES - 1; index >= 0 && completed; index--) {
+    for(int8_t index = AUDIT_MAX_FILES - 1; index >= 0 && completed; index--) {
         audit_file_path(path, AUDIT_DIR, index);
         if(!storage_file_open(file, furi_string_get_cstr(path), FSAM_READ, FSOM_OPEN_EXISTING)) {
             storage_file_close(file);
@@ -219,11 +219,70 @@ static void audit_cli_verify(PipeSide* pipe) {
     }
 }
 
+static void audit_cli_level(FuriString* args) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    AuditSettings settings;
+    audit_settings_load(storage, AUDIT_SETTINGS_PATH, &settings);
+    Audit* audit = furi_record_exists(RECORD_AUDIT) ? furi_record_open(RECORD_AUDIT) : NULL;
+
+    FuriString* name = furi_string_alloc();
+    if(!args_read_string_and_trim(args, name)) {
+        AuditLevel current = audit ? audit_get_level(audit) : settings.min_level;
+        printf("Level: %s\r\n", audit_level_name(current));
+        if(current != settings.min_level) {
+            printf(
+                "Saved level: %s (applied at next boot)\r\n",
+                audit_level_name(settings.min_level));
+        }
+    } else {
+        AuditLevel level = audit_level_from_name(furi_string_get_cstr(name));
+        if(level >= AuditLevelCount) {
+            printf("Unknown level. Use: debug, info, warning, critical or off\r\n");
+        } else {
+            settings.min_level = level;
+            // Save first, so the live level never differs from the file because of an SD error
+            storage_simply_mkdir(storage, EXT_PATH(".sentinel"));
+            storage_simply_mkdir(storage, AUDIT_DIR);
+            if(!audit_settings_save(storage, AUDIT_SETTINGS_PATH, &settings)) {
+                printf("Failed to save %s\r\n", AUDIT_SETTINGS_PATH);
+            } else {
+                if(audit) audit_set_level(audit, level);
+                printf("Level set to %s\r\n", audit_level_name(level));
+            }
+        }
+    }
+
+    furi_string_free(name);
+    if(audit) furi_record_close(RECORD_AUDIT);
+    furi_record_close(RECORD_STORAGE);
+}
+
+static void audit_cli_clear(FuriString* args) {
+    FuriString* confirm = furi_string_alloc();
+    if(!args_read_string_and_trim(args, confirm) || !furi_string_equal_str(confirm, "confirm")) {
+        printf("This deletes the whole audit log. Run 'audit clear confirm' to do it.\r\n");
+    } else if(!furi_record_exists(RECORD_AUDIT)) {
+        printf("Audit service is not running\r\n");
+    } else {
+        Audit* audit = furi_record_open(RECORD_AUDIT);
+        if(audit_clear(audit)) {
+            printf("Audit log cleared\r\n");
+        } else {
+            printf("Failed to clear the audit log (SD card missing or file in use)\r\n");
+        }
+        furi_record_close(RECORD_AUDIT);
+    }
+    furi_string_free(confirm);
+}
+
 static void audit_cli_usage(void) {
     printf("Usage:\r\n");
     printf("audit tail [n]\t - show the last n events (default %d)\r\n", AUDIT_TAIL_DEFAULT);
     printf("audit export\t - print the whole log as CSV, oldest first\r\n");
     printf("audit verify\t - check the MAC chain (only on the device that wrote it)\r\n");
+    printf(
+        "audit level [l]\t - show or set the minimum level: debug, info, warning, critical, off\r\n");
+    printf("audit clear\t - delete the whole log (seq and chain continue)\r\n");
 }
 
 static void audit_cli_execute(PipeSide* pipe, FuriString* args, void* context) {
@@ -238,6 +297,10 @@ static void audit_cli_execute(PipeSide* pipe, FuriString* args, void* context) {
         audit_cli_export(pipe);
     } else if(furi_string_equal_str(command, "verify")) {
         audit_cli_verify(pipe);
+    } else if(furi_string_equal_str(command, "level")) {
+        audit_cli_level(args);
+    } else if(furi_string_equal_str(command, "clear")) {
+        audit_cli_clear(args);
     } else {
         audit_cli_usage();
     }

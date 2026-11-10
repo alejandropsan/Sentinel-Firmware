@@ -1,6 +1,6 @@
 # Diseño: registro de auditoría (Fase 1)
 
-Estado: **aprobado** (08/11/2026; decisiones en la sección 12). No hay código todavía.
+Estado: **implementado** (PR 1–5, 10/11/2026). Decisiones en la sección 12.
 
 ## 1. Objetivo
 
@@ -20,7 +20,7 @@ de coacción y el almacenamiento cifrado.
 - Cifrado del registro: llegará con el almacenamiento cifrado (sección 8).
 - Envío remoto por WiFi.
 - Interfaz gráfica de configuración.
-- API pública para las apps `.fap`, que obligaría a cambiar `api_symbols.csv` y a subir la versión de la API.
+- ~~API pública para las apps `.fap`~~: se adelantó al PR 5 (decisión 6).
 
 ## 2. Modelo de amenazas
 
@@ -121,9 +121,12 @@ applications/services/audit/
   servicio existe (`furi_record_exists`). Con el servicio desactivado, esas líneas no hacen nada.
 - **Presupuesto de RAM** (medido en la v1): unos 7 KB. Pila de 2 KB (usa ~1 KB como máximo), cola de 16
   mensajes y búfer de arranque de 16 mensajes de 148 B cada uno.
-- **Presupuesto de flash** (medido en la v1): +2,8 KB. Quedan unos 2,4 KB libres antes del radio stack
-  (límite 880.640 bytes). Es la restricción principal de la Fase 1: el resto de funciones tendrá que
-  liberar flash (por ejemplo, sacando apps del firmware a la SD) o vivir en plugins de la SD.
+- **Presupuesto de flash** (medido en la v1): +4,8 KB en total (PR 1: 2,9 KB; PR 2: 0,5 KB; PR 3: 0,3 KB;
+  PR 5: 1,1 KB). El firmware ocupa 880.140 de 880.640 bytes: quedan **unos 500 bytes** antes del radio
+  stack. Es la restricción principal de la Fase 1: el resto de funciones tendrá que liberar flash (por
+  ejemplo, sacando apps del firmware a la SD) o vivir en plugins de la SD.
+- El firmware de tests completo (`FIRMWARE_APP_SET=unit_tests`) ya no cabe. Los tests se ejecutan con
+  `FIRMWARE_APP_SET=unit_tests_min`.
 - Los comandos `audit` son un plugin de la CLI que se carga desde la SD (no ocupa flash).
 
 ### Cambios en código de upstream (deben ser mínimos)
@@ -138,12 +141,18 @@ Nada más. Todo lo demás va en carpetas nuevas.
 Los ajustes se guardan en `/ext/.sentinel/audit/audit.settings` (FlipperFormat), aparte de
 `momentum_settings`, para no tocar `lib/momentum`:
 
-| Ajuste | Valor por defecto |
-|---|---|
-| `enabled` | true |
-| `min_level` | info (debug / info / warning / critical) |
-| `max_file_kb` | 64 |
-| `max_files` | 4 |
+| Ajuste | Valor por defecto | Cuándo se aplica |
+|---|---|---|
+| `min_level` | info (debug / info / warning / critical / off) | Al momento con `audit level`; si se edita a mano, al reiniciar |
+| `max_file_kb` | 64 (4–1024) | Al reiniciar |
+| `max_files` | 4 (1–10) | Al reiniciar |
+
+Los valores que faltan o están fuera de rango usan el valor por defecto. El archivo se lee la primera vez
+que la SD está disponible. Los eventos anteriores esperan en RAM y se filtran con el nivel leído.
+
+`off` sustituye al ajuste `enabled` del diseño original: no registra nada salvo `audit.start`,
+`audit.config` y `audit.cleared`, que se escriben con cualquier nivel. Así el propio registro deja
+constancia de cuándo se desactivó.
 
 Comandos CLI:
 
@@ -151,8 +160,8 @@ Comandos CLI:
 audit tail [n]        # últimos n eventos (20 por defecto)
 audit verify          # comprueba la cadena MAC de todos los archivos (solo en el propio Flipper)
 audit export          # vuelca todos los archivos en orden, en CSV
-audit clear           # borra el registro; la primera línea del archivo nuevo es audit.cleared
-audit level <nivel>   # cambia min_level y registra audit.config
+audit clear confirm   # borra el registro; la primera línea del archivo nuevo es audit.cleared
+audit level [nivel]   # muestra o cambia min_level y registra audit.config
 ```
 
 ## 8. Relación con otras funciones de la Fase 1
@@ -203,3 +212,5 @@ audit level <nivel>   # cambia min_level y registra audit.config
 | 3 | ¿Anclaje en el RTC? | **En la v1.1** | Solo quedan unos 10 registros libres del RTC. Se repartirán junto con el PIN de coacción y el arranque seguro |
 | 4 | ¿Dónde va la interfaz de ajustes? | **App propia "Sentinel Security"**, creada con el PIN de coacción. En la v1, solo CLI | Sin conflictos con upstream. Reunirá los ajustes de toda la Fase 1 |
 | 5 | ¿Cómo se calcula `chain`? (08/11/2026, durante el PR 1) | **CBC-MAC con AES por hardware y la clave única del dispositivo**, en lugar de SHA-256 | SHA-256 no está en el firmware y costaba 2,6 KB de flash. Además, una cadena sin clave se puede recalcular tras editar el registro, así que no protegía frente a un atacante |
+| 6 | ¿Cómo llegan `audit level` y `audit clear` al servicio? (10/11/2026, PR 5) | **API exportada** en `api_symbols.csv` (versión 87.1 → 87.2): `audit_log`, `audit_log_va`, `sentinel_audit`, `audit_get_level`, `audit_set_level` y `audit_clear` | El comando `audit` es un plugin y solo ve funciones exportadas. Con archivos, los cambios esperarían al reinicio, y borrar mientras el servicio escribe rompería la cadena. La futura app "Sentinel Security" usará la misma API |
+| 7 | ¿Qué pasa con `seq` y la cadena tras `audit clear`? (10/11/2026, PR 5) | **Continúan**: el archivo nuevo empieza con `audit.cleared` encadenado al último evento borrado | Deja constancia del borrado y de cuántos eventos había antes. `audit verify` toma esa línea como punto de partida |

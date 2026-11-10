@@ -153,6 +153,127 @@ MU_TEST(test_audit_verify) {
     }
 }
 
+MU_TEST(test_audit_levels) {
+    for(AuditLevel level = 0; level < AuditLevelCount; level++) {
+        mu_assert_int_eq(level, audit_level_from_name(audit_level_name(level)));
+    }
+    mu_assert_string_eq("off", audit_level_name(AuditLevelOff));
+    mu_assert_int_eq(AuditLevelCount, audit_level_from_name("Info"));
+    mu_assert_int_eq(AuditLevelCount, audit_level_from_name(""));
+}
+
+static void audit_test_write_text(Storage* storage, const char* path, const char* text) {
+    File* file = storage_file_alloc(storage);
+    mu_check(storage_file_open(file, path, FSAM_WRITE, FSOM_CREATE_ALWAYS));
+    mu_check(storage_file_write(file, text, strlen(text)) == strlen(text));
+    storage_file_close(file);
+    storage_file_free(file);
+}
+
+MU_TEST(test_audit_settings) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_remove_recursive(storage, AUDIT_TEST_DIR);
+    mu_check(storage_simply_mkdir(storage, EXT_PATH(".tmp/unit_tests")));
+    mu_check(storage_simply_mkdir(storage, AUDIT_TEST_DIR));
+    const char* path = AUDIT_TEST_DIR "/audit.settings";
+    AuditSettings settings;
+
+    // Missing file: defaults
+    audit_settings_load(storage, path, &settings);
+    mu_assert_int_eq(AuditLevelInfo, settings.min_level);
+    mu_assert_int_eq(AUDIT_DEFAULT_MAX_FILE_SIZE / 1024, settings.max_file_kb);
+    mu_assert_int_eq(AUDIT_DEFAULT_MAX_FILES, settings.max_files);
+
+    // Round trip
+    settings = (AuditSettings){.min_level = AuditLevelOff, .max_file_kb = 16, .max_files = 2};
+    mu_check(audit_settings_save(storage, path, &settings));
+    AuditSettings loaded;
+    audit_settings_load(storage, path, &loaded);
+    mu_assert_int_eq(AuditLevelOff, loaded.min_level);
+    mu_assert_int_eq(16, loaded.max_file_kb);
+    mu_assert_int_eq(2, loaded.max_files);
+
+    // Hand-edited file: keys in another order, bad values fall back one by one
+    audit_test_write_text(
+        storage,
+        path,
+        "Filetype: " AUDIT_SETTINGS_TYPE "\nVersion: 1\n"
+        "max_files: 99\nmax_file_kb: 8\nmin_level: loud\n");
+    audit_settings_load(storage, path, &loaded);
+    mu_assert_int_eq(AuditLevelInfo, loaded.min_level);
+    mu_assert_int_eq(8, loaded.max_file_kb);
+    mu_assert_int_eq(AUDIT_DEFAULT_MAX_FILES, loaded.max_files);
+
+    // Another file type is ignored
+    audit_test_write_text(storage, path, "Filetype: Other\nVersion: 1\nmax_files: 2\n");
+    audit_settings_load(storage, path, &loaded);
+    mu_assert_int_eq(AUDIT_DEFAULT_MAX_FILES, loaded.max_files);
+
+    storage_simply_remove_recursive(storage, AUDIT_TEST_DIR);
+    furi_record_close(RECORD_STORAGE);
+}
+
+MU_TEST(test_audit_clear) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_remove_recursive(storage, AUDIT_TEST_DIR);
+
+    AuditStorage* writer = audit_storage_alloc(storage, AUDIT_TEST_DIR, 1024, 3);
+    mu_assert(audit_storage_open(writer), "open failed");
+    mu_assert(audit_storage_begin(writer), "begin failed");
+    // About 14 events fit in a 1 KB file, so this fills more than one
+    for(uint32_t i = 0; i < 20; i++) {
+        mu_check(audit_storage_write(
+            writer, &audit_test_datetime, i, AuditLevelInfo, "test.event", "clear"));
+    }
+    audit_storage_end(writer);
+    AuditChain before = *audit_storage_get_chain(writer);
+    uint8_t existing = 0;
+    for(uint8_t i = 0; i < 3; i++) {
+        existing += audit_test_file_exists(storage, i);
+    }
+    mu_assert(existing >= 2, "no rotation happened");
+
+    uint8_t removed = 0;
+    mu_check(audit_storage_clear(writer, &removed));
+    mu_assert_int_eq(existing, removed);
+    mu_check(!audit_test_file_exists(storage, 0));
+    mu_check(!audit_test_file_exists(storage, 1));
+
+    // seq and chain continue in a new file that has a header
+    mu_assert_int_eq(before.seq, audit_storage_get_chain(writer)->seq);
+    mu_assert_string_eq(before.chain, audit_storage_get_chain(writer)->chain);
+    mu_assert(audit_storage_begin(writer), "begin after clear failed");
+    mu_check(audit_storage_write(
+        writer, &audit_test_datetime, 1, AuditLevelWarning, "audit.cleared", "files=2"));
+    audit_storage_end(writer);
+    mu_assert_int_eq(before.seq + 1, audit_storage_get_chain(writer)->seq);
+    audit_storage_free(writer);
+
+    FuriString* path = furi_string_alloc();
+    audit_file_path(path, AUDIT_TEST_DIR, 0);
+    File* file = storage_file_alloc(storage);
+    mu_check(storage_file_open(file, furi_string_get_cstr(path), FSAM_READ, FSOM_OPEN_EXISTING));
+    char buffer[256] = {0};
+    storage_file_read(file, buffer, sizeof(buffer) - 1);
+    storage_file_close(file);
+    storage_file_free(file);
+    furi_string_free(path);
+    mu_assert(strncmp(buffer, AUDIT_HEADER, strlen(AUDIT_HEADER)) == 0, "missing header");
+
+    // The first line verifies against the last deleted event
+    AuditChain chain = before;
+    mu_assert_int_eq(AuditVerifyOk, audit_verify_line(buffer + strlen(AUDIT_HEADER), &chain));
+
+    // Clearing an empty directory is fine
+    writer = audit_storage_alloc(storage, AUDIT_TEST_DIR, 1024, 3);
+    storage_simply_remove_recursive(storage, AUDIT_TEST_DIR);
+    mu_check(audit_storage_clear(writer, &removed));
+    mu_assert_int_eq(0, removed);
+    audit_storage_free(writer);
+
+    furi_record_close(RECORD_STORAGE);
+}
+
 MU_TEST(test_audit_rotation_and_restore) {
     Storage* storage = furi_record_open(RECORD_STORAGE);
     storage_simply_remove_recursive(storage, AUDIT_TEST_DIR);
@@ -234,6 +355,9 @@ MU_TEST_SUITE(test_audit_suite) {
     MU_RUN_TEST(test_audit_chain);
     MU_RUN_TEST(test_audit_parse_rejects);
     MU_RUN_TEST(test_audit_verify);
+    MU_RUN_TEST(test_audit_levels);
+    MU_RUN_TEST(test_audit_settings);
+    MU_RUN_TEST(test_audit_clear);
     MU_RUN_TEST(test_audit_rotation_and_restore);
     MU_RUN_TEST(test_audit_unterminated_line);
 }

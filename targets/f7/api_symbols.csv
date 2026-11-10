@@ -1,9 +1,10 @@
 entry,status,name,type,params
-Version,+,87.1,,
+Version,+,87.2,,
 Header,+,applications/drivers/subghz/cc1101_ext/cc1101_ext_interconnect.h,,
 Header,+,applications/main/archive/helpers/archive_helpers_ext.h,,
 Header,+,applications/main/subghz/subghz_fap.h,,
 Header,+,applications/services/applications.h,,
+Header,+,applications/services/audit/audit.h,,
 Header,+,applications/services/bt/bt_service/bt.h,,
 Header,+,applications/services/bt/bt_service/bt_keys_storage.h,,
 Header,+,applications/services/cli/cli.h,,
@@ -687,6 +688,11 @@ Function,-,atoff,float,const char*
 Function,+,atoi,int,const char*
 Function,-,atol,long,const char*
 Function,-,atoll,long long,const char*
+Function,+,audit_clear,_Bool,Audit*
+Function,+,audit_get_level,AuditLevel,Audit*
+Function,+,audit_log,void,"Audit*, AuditLevel, const char*, const char*, ..."
+Function,+,audit_log_va,void,"Audit*, AuditLevel, const char*, const char*, va_list"
+Function,+,audit_set_level,void,"Audit*, AuditLevel"
 Function,-,basename,char*,const char*
 Function,-,bcmp,int,"const void*, const void*, size_t"
 Function,-,bcopy,void,"const void*, void*, size_t"
@@ -3339,6 +3345,7 @@ Function,+,scene_manager_stop,void,SceneManager*
 Function,+,sd_api_get_fs_type_text,const char*,SDFsType
 Function,-,secure_getenv,char*,const char*
 Function,-,seed48,unsigned short*,unsigned short[3]
+Function,+,sentinel_audit,void,"AuditLevel, const char*, const char*, ..."
 Function,-,setbuf,void,"FILE*, char*"
 Function,-,setbuffer,void,"FILE*, char*, int"
 Function,-,setenv,int,"const char*, const char*, int"

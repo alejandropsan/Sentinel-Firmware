@@ -26,6 +26,7 @@ typedef enum {
     AuditLevelInfo,
     AuditLevelWarning,
     AuditLevelCritical,
+    AuditLevelOff, /**< Only valid as minimum level: log nothing but configuration events */
     AuditLevelCount,
 } AuditLevel;
 
@@ -60,6 +61,27 @@ void audit_log_va(
  */
 void sentinel_audit(AuditLevel level, const char* event, const char* format, ...)
     __attribute__((__format__(__printf__, 3, 4)));
+
+/** @brief Current minimum level. */
+AuditLevel audit_get_level(Audit* audit);
+
+/**
+ * @brief Change the minimum level until the next reboot.
+ *
+ * Logs an `audit.config` event, which is written whatever the level. Saving
+ * the setting to audit.settings is up to the caller.
+ */
+void audit_set_level(Audit* audit, AuditLevel level);
+
+/**
+ * @brief Delete every log file.
+ *
+ * Blocks until the service has done it. `seq` and the chain are kept: the new
+ * file starts with an `audit.cleared` event chained to the last deleted one.
+ *
+ * @return false if the SD card is not available or a file could not be removed
+ */
+bool audit_clear(Audit* audit);
 
 #ifdef __cplusplus
 }
