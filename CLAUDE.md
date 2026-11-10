@@ -28,8 +28,12 @@ Local overrides go in `fbt_options_local.py`, not `fbt_options.py`. Options can 
 ### Tests
 
 Tests run on the device, not the host:
-1. `./fbt FIRMWARE_APP_SET=unit_tests updater_package` (or `flash_usb_full`)
-2. Open the CLI (`./fbt cli`) and run `unit_tests`, or `unit_tests <test_name>` for a single suite. Test names are the app names in `applications/debug/unit_tests/application.fam`.
+1. `./fbt FIRMWARE_APP_SET=unit_tests_min firmware_all`, then `./fbt FIRMWARE_APP_SET=unit_tests_min flash_usb`. The full `unit_tests` set no longer fits in flash (it would overwrite the radio stack), so do not flash it.
+2. Build the suite with `./fbt fap_test_<name>` and copy `build/f7-firmware-C/.extapps/test_<name>.fal` to `/ext/apps_data/unit_tests/plugins/` (`scripts/storage.py send`).
+3. After a flash, press a button on the "Momentum updated" screen. Until then the CLI stops responding after a few seconds.
+4. Open the CLI (`./fbt cli`) and run `unit_tests`, or `unit_tests <test_name>` for a single suite. Test names are the app names in `applications/debug/unit_tests/application.fam`.
+
+Flash is the main constraint: the firmware must stay under 880,640 bytes (radio stack start; the 1024K in the linker script is misleading). Check `build/f7-firmware-C/firmware.bin` after every change.
 
 Each test suite is a `PLUGIN` app under `applications/debug/unit_tests/tests/<name>/`; test data lives in `applications/debug/unit_tests/resources/unit_tests/`. (CONTRIBUTING.md mentions `./fbt firmware_test`, which is not an fbt target.)
 
