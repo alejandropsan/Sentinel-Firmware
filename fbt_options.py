@@ -94,6 +94,7 @@ FIRMWARE_APPS = {
     "default": [
         # Svc
         "basic_services",
+        "audit",
         # Apps
         "main_apps",
         "system_apps",
@@ -103,6 +104,7 @@ FIRMWARE_APPS = {
     "unit_tests": [
         # Svc
         "basic_services",
+        "audit",
         # Apps
         "main_apps",
         "system_apps",
@@ -113,6 +115,7 @@ FIRMWARE_APPS = {
     ],
     "unit_tests_min": [
         "basic_services",
+        "audit",
         "updater_app",
         "radio_device_cc1101_ext",
         "unit_tests",

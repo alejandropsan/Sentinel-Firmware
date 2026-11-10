@@ -12,6 +12,7 @@
 
 #include <toolbox/cli/cli_command.h>
 #include <cli/cli_main_commands.h>
+#include <audit/audit.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <m-dict.h>
@@ -385,11 +386,18 @@ static void
     }
 }
 
+// Sentinel: owner names for the audit log
+static const char* const rpc_owner_names[RpcOwnerCount] = {"unknown", "ble", "usb", "uart"};
+
 RpcSession* rpc_session_open(Rpc* rpc, RpcOwner owner) {
     if(furi_hal_rtc_is_flag_set(FuriHalRtcFlagLock)) {
-        if(owner == RpcOwnerUsb && !momentum_settings.allow_locked_rpc_usb) return NULL;
-        if(owner == RpcOwnerBle && !momentum_settings.allow_locked_rpc_ble) return NULL;
+        if((owner == RpcOwnerUsb && !momentum_settings.allow_locked_rpc_usb) ||
+           (owner == RpcOwnerBle && !momentum_settings.allow_locked_rpc_ble)) {
+            sentinel_audit(AuditLevelWarning, "rpc.denied", "owner=%s", rpc_owner_names[owner]);
+            return NULL;
+        }
     }
+    sentinel_audit(AuditLevelWarning, "rpc.open", "owner=%s", rpc_owner_names[owner]);
 
     furi_check(rpc);
 
@@ -435,6 +443,7 @@ void rpc_session_close(RpcSession* session) {
     furi_check(session->rpc);
 
     session->rpc->sessions_count--;
+    sentinel_audit(AuditLevelInfo, "rpc.close", "owner=%s", rpc_owner_names[session->owner]);
 
     rpc_session_set_send_bytes_callback(session, NULL);
     rpc_session_set_close_callback(session, NULL);

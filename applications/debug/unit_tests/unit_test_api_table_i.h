@@ -9,6 +9,7 @@
 #include <flipper.pb.h>
 #include <applications/system/js_app/js_thread.h>
 #include <applications/system/js_app/js_value.h>
+#include <applications/services/audit/audit_storage.h>
 
 static constexpr auto unit_tests_api_table = sort(create_array_t<sym_entry>(
     API_METHOD(resource_manifest_reader_alloc, ResourceManifestReader*, (Storage*)),
@@ -34,6 +35,9 @@ static constexpr auto unit_tests_api_table = sort(create_array_t<sym_entry>(
         xQueueGenericSend,
         BaseType_t,
         (QueueHandle_t, const void* const, TickType_t, const BaseType_t)),
+// Sentinel: in Momentum js_app is an EXTERNAL app, so these symbols are not in
+// the firmware and the unit test firmware does not link. test_js cannot run.
+#ifdef UNIT_TESTS_JS_IN_FIRMWARE
     API_METHOD(
         js_thread_run,
         JsThread*,
@@ -51,4 +55,29 @@ static constexpr auto unit_tests_api_table = sort(create_array_t<sym_entry>(
          mjs_val_t* source,
          size_t n_c_vals,
          ...)),
+#endif
+    API_METHOD(audit_chain_reset, void, (AuditChain*)),
+    API_METHOD(audit_sanitize, void, (char*)),
+    API_METHOD(
+        audit_format_line,
+        void,
+        (FuriString*, AuditChain*, const DateTime*, uint32_t, AuditLevel, const char*, const char*)),
+    API_METHOD(audit_parse_line, bool, (const char*, AuditChain*)),
+    API_METHOD(audit_level_name, const char*, (AuditLevel)),
+    API_METHOD(audit_level_from_name, AuditLevel, (const char*)),
+    API_METHOD(audit_settings_load, void, (Storage*, const char*, AuditSettings*)),
+    API_METHOD(audit_settings_save, bool, (Storage*, const char*, const AuditSettings*)),
+    API_METHOD(audit_storage_clear, bool, (AuditStorage*, uint8_t*)),
+    API_METHOD(audit_verify_line, AuditVerifyResult, (const char*, AuditChain*)),
+    API_METHOD(audit_file_path, void, (FuriString*, const char*, uint8_t)),
+    API_METHOD(audit_storage_alloc, AuditStorage*, (Storage*, const char*, uint32_t, uint8_t)),
+    API_METHOD(audit_storage_free, void, (AuditStorage*)),
+    API_METHOD(audit_storage_open, bool, (AuditStorage*)),
+    API_METHOD(audit_storage_begin, bool, (AuditStorage*)),
+    API_METHOD(
+        audit_storage_write,
+        bool,
+        (AuditStorage*, const DateTime*, uint32_t, AuditLevel, const char*, const char*)),
+    API_METHOD(audit_storage_end, void, (AuditStorage*)),
+    API_METHOD(audit_storage_get_chain, const AuditChain*, (AuditStorage*)),
     API_VARIABLE(PB_Main_msg, PB_Main_msg_t)));

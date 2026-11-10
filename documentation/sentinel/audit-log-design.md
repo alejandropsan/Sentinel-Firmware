@@ -1,0 +1,216 @@
+# Diseño: registro de auditoría (Fase 1)
+
+Estado: **implementado** (PR 1–5, 10/11/2026). Decisiones en la sección 12.
+
+## 1. Objetivo
+
+Guardar en el propio Flipper un registro de los eventos relevantes para la seguridad: quién desbloqueó
+el dispositivo, PIN fallidos, qué apps se ejecutaron y cuándo se conectó un ordenador. El registro debe
+**dejar en evidencia la manipulación**, aunque no pueda impedirla. También es la base que usarán el PIN
+de coacción y el almacenamiento cifrado.
+
+### Alcance de la v1
+- Servicio de firmware que recibe eventos y los escribe en la SD sin bloquear a quien los emite.
+- Eventos del sistema: arranque, bloqueo y desbloqueo, PIN, apps, SD y sesiones RPC.
+- Formato CSV legible, con niveles, marca de tiempo y una cadena MAC con la clave del dispositivo.
+- Rotación de archivos con un tamaño máximo.
+- Comandos CLI para leer, verificar, exportar y borrar el registro.
+
+### Fuera de la v1
+- Cifrado del registro: llegará con el almacenamiento cifrado (sección 8).
+- Envío remoto por WiFi.
+- Interfaz gráfica de configuración.
+- ~~API pública para las apps `.fap`~~: se adelantó al PR 5 (decisión 6).
+
+## 2. Modelo de amenazas
+
+| Escenario | ¿Lo cubre la v1? |
+|---|---|
+| Alguien usa el Flipper desbloqueado sin permiso | Sí: quedan registradas las apps y las sesiones RPC/qFlipper |
+| Intentos de adivinar el PIN | Sí: cada fallo queda registrado, con el contador |
+| Alguien edita o borra líneas del registro desde otro equipo | **Se detecta** con la cadena MAC (`audit verify`), pero no se impide. Sin la clave del dispositivo no se pueden recalcular los valores |
+| Alguien borra el archivo entero o formatea la SD | No se detecta en la v1; ver el anclaje en RTC (sección 9) |
+| Alguien lee el registro sacando la SD | No se impide: el registro va en texto plano hasta que exista el cifrado |
+
+Hechos del código que condicionan el diseño:
+- **No hay almacenamiento interno persistente.** `/int` se redirige a `/ext/.int`, en la SD
+  (`storage_processing.c`). Todo lo que guardemos acaba en la SD.
+- **Momentum ya puede formatear la SD tras 10 PIN fallidos** (`momentum_settings.bad_pins_format`,
+  en `desktop_scene_pin_input.c`). Si esa opción está activa, el formateo se lleva el registro por
+  delante.
+- **Nunca se registran secretos**: ni PIN, ni claves, ni contenido de archivos.
+
+## 3. Eventos de la v1
+
+| Evento | Nivel | Origen | ¿Toca código de upstream? |
+|---|---|---|---|
+| `system.boot` (versión del firmware y mensaje del último crash, si lo hubo) | info | Arranque del servicio, `furi_hal_rtc_get_fault_data()` | No |
+| `desktop.lock` / `desktop.unlock` | info | Pubsub de estado del escritorio (`desktop_api_get_status_pubsub`) | No |
+| `pin.fail` (con el número de fallos) / `pin.ok` | warning / info | `desktop_scene_pin_input.c` | Sí: 2 líneas |
+| `app.start` / `app.stop` / `app.load_failed` | info | Pubsub del loader | No (ver la nota) |
+| `sd.mount` / `sd.unmount` / `sd.error` | info / warning | Pubsub de almacenamiento | No |
+| `rpc.open` (warning) / `rpc.close` (info), con el origen: USB, BLE o UART | warning / info | `rpc_session_open` / `rpc_session_close` en `rpc.c` | Sí: unas pocas líneas |
+| `rpc.denied`: conexión RPC rechazada con el Flipper bloqueado | warning | `rpc_session_open` | Sí (mismo cambio). En la práctica casi no se dispara: al bloquear, el USB se desactiva y Momentum cierra el RPC por Bluetooth salvo que "Allow BLE RPC While Locked" esté activado |
+| `audit.start`, `audit.rotate`, `audit.cleared`, `audit.dropped`, `audit.config` | info / warning | El propio servicio | No |
+
+**Nota sobre el loader.** `LoaderEvent` solo lleva el tipo de evento, no el nombre de la app. Además, los
+callbacks del pubsub se ejecutan dentro del hilo del loader, así que llamar desde ahí a
+`loader_get_application_name()` lo bloquearía. El callback solo encolará el evento. El hilo de
+auditoría preguntará después el nombre con `loader_get_application_launch_path()`. Hay que comprobar en
+hardware que el nombre ya está disponible en ese momento. Si no lo está, la alternativa es añadir el
+nombre a `LoaderEvent`, lo que cambia la API y obliga a subir su versión.
+
+Para la v2 quedan las sesiones de la CLI por USB, los cambios de ajustes y el estado del Bluetooth.
+El Bluetooth tiene un solo callback (`bt_set_status_changed_callback`) y otras partes ya lo usan.
+
+## 4. Formato
+
+Una línea CSV por evento, en UTF-8 y con fin de línea `\n`:
+
+```
+seq,time,uptime_ms,level,event,detail,chain
+```
+
+- `seq`: contador que crece de uno en uno y no se reinicia al rotar archivos.
+- `time`: hora del RTC en formato ISO 8601 (`2026-11-08T01:07:30`). El RTC puede estar mal puesto,
+  así que también se guarda `uptime_ms`.
+- `detail`: texto libre, de 96 bytes como máximo. Las comas, comillas y saltos de línea se sustituyen
+  por `_`, de modo que nunca hay que escapar nada.
+- `chain`: los primeros 16 caracteres hexadecimales de un **CBC-MAC con AES por hardware y la clave
+  única del dispositivo** (ranura `FURI_HAL_CRYPTO_ENCLAVE_UNIQUE_KEY_SLOT` del enclave seguro), calculado
+  sobre `longitud (32 bits) || chain_anterior || línea_sin_chain`. El prefijo de longitud hace seguro el
+  CBC-MAC con mensajes de longitud variable. La primera línea de cada archivo encadena con el último
+  `chain` del archivo anterior. Si la clave no está disponible, `chain` vale `xxxxxxxxxxxxxxxx`.
+  Solo se puede verificar en el propio Flipper.
+
+La primera línea de cada archivo es una cabecera con la versión del formato:
+
+```
+# sentinel-audit v1
+seq,time,uptime_ms,level,event,detail,chain
+1042,2026-11-08T01:07:30,5321,info,system.boot,fw=mntm-dev-45cdcf0a fault=none,3f9a0c17b2e4d851
+1043,2026-11-08T01:07:41,16012,warning,pin.fail,count=1,a17c55e0942bd3f0
+```
+
+## 5. Almacenamiento y rotación
+
+- Ruta: `/ext/.sentinel/audit/audit.csv`. Al rotar pasa a `audit.1.csv`, luego a `audit.2.csv`, y así
+  sucesivamente.
+- Valores por defecto: 64 KB por archivo y 4 archivos (256 KB en total, unas 3.000 líneas).
+- Escritura: el servicio agrupa los eventos pendientes y hace abrir, añadir y cerrar en cada lote, para
+  no perder datos si se saca la SD.
+- **Antes de que se monte la SD** (al arrancar), los eventos esperan en un búfer en RAM de 16 entradas.
+  Se vuelcan cuando llega `sd.mount`. Si el búfer se llena, se registra `audit.dropped` con el número
+  de eventos perdidos.
+
+## 6. Arquitectura
+
+```
+applications/services/audit/
+├── application.fam      # SERVICE "audit", record RECORD_AUDIT
+├── audit.h              # API interna del firmware
+├── audit.c              # hilo, cola, suscripciones a pubsub
+├── audit_storage.c      # formato, cadena MAC, rotación
+└── audit_cli.c          # comandos CLI (plugin, como cli_neofetch)
+```
+
+- **API**: `audit_log(level, event, fmt, ...)`. Formatea el texto en el hilo de quien llama y lo mete en
+  la cola con espera 0. **Nunca bloquea**: si la cola está llena, aumenta el contador de eventos
+  perdidos. Así se puede llamar desde el escritorio o el RPC sin riesgo de interbloqueos.
+- Para los cambios en código de upstream, un helper `sentinel_audit(...)` comprueba primero si el
+  servicio existe (`furi_record_exists`). Con el servicio desactivado, esas líneas no hacen nada.
+- **Presupuesto de RAM** (medido en la v1): unos 7 KB. Pila de 2 KB (usa ~1 KB como máximo), cola de 16
+  mensajes y búfer de arranque de 16 mensajes de 148 B cada uno.
+- **Presupuesto de flash** (medido en la v1): +4,8 KB en total (PR 1: 2,9 KB; PR 2: 0,5 KB; PR 3: 0,3 KB;
+  PR 5: 1,1 KB). El firmware ocupa 880.140 de 880.640 bytes: quedan **unos 500 bytes** antes del radio
+  stack. Es la restricción principal de la Fase 1: el resto de funciones tendrá que liberar flash (por
+  ejemplo, sacando apps del firmware a la SD) o vivir en plugins de la SD.
+- El firmware de tests completo (`FIRMWARE_APP_SET=unit_tests`) ya no cabe. Los tests se ejecutan con
+  `FIRMWARE_APP_SET=unit_tests_min`.
+- Los comandos `audit` son un plugin de la CLI que se carga desde la SD (no ocupa flash).
+
+### Cambios en código de upstream (deben ser mínimos)
+- `applications/services/desktop/scenes/desktop_scene_pin_input.c`: `pin.ok` y `pin.fail`.
+- `applications/services/rpc/rpc.c`: `rpc.open` y `rpc.close`.
+- `fbt_options.py` o `application.fam`: incluir el servicio en el firmware.
+
+Nada más. Todo lo demás va en carpetas nuevas.
+
+## 7. Configuración y CLI
+
+Los ajustes se guardan en `/ext/.sentinel/audit/audit.settings` (FlipperFormat), aparte de
+`momentum_settings`, para no tocar `lib/momentum`:
+
+| Ajuste | Valor por defecto | Cuándo se aplica |
+|---|---|---|
+| `min_level` | info (debug / info / warning / critical / off) | Al momento con `audit level`; si se edita a mano, al reiniciar |
+| `max_file_kb` | 64 (4–1024) | Al reiniciar |
+| `max_files` | 4 (1–10) | Al reiniciar |
+
+Los valores que faltan o están fuera de rango usan el valor por defecto. El archivo se lee la primera vez
+que la SD está disponible. Los eventos anteriores esperan en RAM y se filtran con el nivel leído.
+
+`off` sustituye al ajuste `enabled` del diseño original: no registra nada salvo `audit.start`,
+`audit.config` y `audit.cleared`, que se escriben con cualquier nivel. Así el propio registro deja
+constancia de cuándo se desactivó.
+
+Comandos CLI:
+
+```
+audit tail [n]        # últimos n eventos (20 por defecto)
+audit verify          # comprueba la cadena MAC de todos los archivos (solo en el propio Flipper)
+audit export          # vuelca todos los archivos en orden, en CSV
+audit clear confirm   # borra el registro; la primera línea del archivo nuevo es audit.cleared
+audit level [nivel]   # muestra o cambia min_level y registra audit.config
+```
+
+## 8. Relación con otras funciones de la Fase 1
+
+- **PIN de coacción**: si el uso del PIN de coacción quedara registrado en texto plano, quien lea la SD
+  sabría que se usó. **Decidido:** se registra un `desktop.unlock` normal y ningún evento específico de
+  coacción. Cuando exista el cifrado se valorará un evento propio dentro del registro cifrado.
+- **Almacenamiento cifrado**: cuando exista, el registro pasará a escribirse cifrado. El formato no
+  cambia: solo cambia dónde y cómo se escribe.
+- **`bad_pins_format` de Momentum**: si se formatea la SD, el registro se pierde. Hay que dejarlo
+  documentado para el usuario.
+
+## 9. Mejoras opcionales (v1.1)
+
+- **Anclaje en RTC**: guardar `seq` y 32 bits del último `chain` en registros de respaldo del RTC que
+  estén libres (el STM32WB tiene 20 y el firmware usa unos 9). Así se detectaría que se ha borrado el
+  archivo entero o se ha truncado su final. Se pierde si se queda sin batería, y obliga a tocar
+  `furi_hal_rtc.h`.
+  **Decidido:** se deja para la v1.1. El reparto de los registros libres del RTC se diseñará junto con
+  el PIN de coacción y el arranque seguro, que también los necesitarán.
+
+## 10. Pruebas
+
+- **Tests unitarios** (nueva suite `audit` en `applications/debug/unit_tests`): formato y saneado de
+  `detail`, cálculo y verificación de la cadena, verificación que detecta una línea alterada, rotación
+  en un directorio temporal y desbordamiento de la cola.
+- **En hardware**, con el log serie:
+  - arranque, bloqueo y desbloqueo, PIN fallido y PIN correcto;
+  - abrir y cerrar apps (comprobar que sale el nombre);
+  - conectar qFlipper y sacar y volver a meter la SD;
+  - medir el heap libre con el servicio activo y sin él.
+
+## 11. Plan de implementación (PR pequeños)
+
+1. Servicio, formato, rotación y `audit tail` / `audit export`, con eventos `system.boot` y
+   `audit.*`. Incluye los tests unitarios del formato y la rotación.
+2. Eventos por pubsub: escritorio, loader y SD.
+3. Cambios mínimos en upstream: PIN y RPC.
+4. `audit verify` (la cadena MAC ya se escribe desde el PR 1).
+5. Ajustes en archivo y `audit level` / `audit clear`.
+
+## 12. Decisiones (08/11/2026)
+
+| # | Pregunta | Decisión | Motivo |
+|---|---|---|---|
+| 1 | ¿Cómo se registra el uso del PIN de coacción? | **Como un desbloqueo normal** (`desktop.unlock`) | La coacción solo sirve si no se nota, y el registro está en la SD. Cuando exista el cifrado se valorará un evento propio dentro del registro cifrado |
+| 2 | ¿Texto plano en la v1? | **Sí**, dejándolo documentado | Permite probar el registro ya. El formato no cambiará con el cifrado. Lo que revela ya se deduce de los demás archivos de la SD |
+| 3 | ¿Anclaje en el RTC? | **En la v1.1** | Solo quedan unos 10 registros libres del RTC. Se repartirán junto con el PIN de coacción y el arranque seguro |
+| 4 | ¿Dónde va la interfaz de ajustes? | **App propia "Sentinel Security"**, creada con el PIN de coacción. En la v1, solo CLI | Sin conflictos con upstream. Reunirá los ajustes de toda la Fase 1 |
+| 5 | ¿Cómo se calcula `chain`? (08/11/2026, durante el PR 1) | **CBC-MAC con AES por hardware y la clave única del dispositivo**, en lugar de SHA-256 | SHA-256 no está en el firmware y costaba 2,6 KB de flash. Además, una cadena sin clave se puede recalcular tras editar el registro, así que no protegía frente a un atacante |
+| 6 | ¿Cómo llegan `audit level` y `audit clear` al servicio? (10/11/2026, PR 5) | **API exportada** en `api_symbols.csv` (versión 87.1 → 87.2): `audit_log`, `audit_log_va`, `sentinel_audit`, `audit_get_level`, `audit_set_level` y `audit_clear` | El comando `audit` es un plugin y solo ve funciones exportadas. Con archivos, los cambios esperarían al reinicio, y borrar mientras el servicio escribe rompería la cadena. La futura app "Sentinel Security" usará la misma API |
+| 7 | ¿Qué pasa con `seq` y la cadena tras `audit clear`? (10/11/2026, PR 5) | **Continúan**: el archivo nuevo empieza con `audit.cleared` encadenado al último evento borrado | Deja constancia del borrado y de cuántos eventos había antes. `audit verify` toma esa línea como punto de partida |

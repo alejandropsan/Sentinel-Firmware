@@ -2,7 +2,19 @@
 
 # 🗺️ Hoja de ruta del firmware Sentinel
 
-## Fase 1: Núcleo de seguridad (meses 1-3) ✅ EN CURSO
+> **Estado actual (noviembre 2026):** Fase 0 completada. La Fase 1 aún no ha empezado y ninguna función de seguridad está implementada.
+> Las fases no tienen fechas comprometidas: los objetivos de lanzamiento se cumplirán al completar cada fase.
+
+## Fase 0: Base del proyecto ✅ COMPLETADA
+
+- [x] Fork de Momentum (mntm-011)
+- [x] Marca Sentinel (`FIRMWARE_ORIGIN`)
+- [x] Configuración de CI/CD (GitHub Actions)
+- [x] Asset pack Sentinel: 3 animaciones e iconos propios
+- [x] Iconos Sentinel en el menú principal y en el menú de bloqueo
+- [x] Servidor de Discord de la comunidad
+
+## Fase 1: Núcleo de seguridad ⏳ SIGUIENTE (sin empezar)
 
 ### Funciones de seguridad
 - [ ] **Sistema PIN de coacción**
@@ -17,12 +29,14 @@
   - [ ] Derivación de claves basada en contraseña (PBKDF2)
   - [ ] Cifrado/descifrado transparente
 
-- [ ] **Registro de auditoría**
-  - [ ] Niveles de registro configurables
-  - [ ] Marca de tiempo en todas las operaciones
-  - [ ] Exportación a CSV
-  - [ ] Registro remoto a través de WiFi
-  - [ ] Rotación y límites de registros
+- [x] **Registro de auditoría** (v1; diseño en `documentation/sentinel/audit-log-design.md`)
+  - [x] Niveles de registro configurables (`audit level`)
+  - [x] Marca de tiempo en todas las operaciones
+  - [x] Exportación a CSV (`audit export`)
+  - [x] Cadena MAC con la clave del dispositivo para detectar manipulaciones (`audit verify`)
+  - [x] Rotación y límites de registros
+  - [ ] Registro remoto a través de WiFi (v2)
+  - [ ] Cifrado del registro (llegará con el almacenamiento cifrado)
 
 - [ ] **Arranque seguro**
   - [ ] Verificación de la suma de comprobación del firmware
@@ -30,17 +44,13 @@
   - [ ] Alternancia entre modo desarrollador y modo seguro
 
 ### Infraestructura
-- [x] Repositorio Fork
-- [x] Configuración de CI/CD
-- [x] Creación del paquete de activos Sentinel
 - [ ] Sitio de documentación (MkDocs)
-- [ ] Servidor Discord de la comunidad
 
-**Lanzamiento previsto**: Alpha v0.1.0 (mes 3)
+**Lanzamiento previsto**: Alpha v0.1.0 (al completar la Fase 1)
 
 ---
 
-## Fase 2: Programación avanzada (meses 4-6)
+## Fase 2: Programación avanzada
 
 ### DuckyScript 3.0
 - [ ] Implementación del analizador sintáctico (flex/bison)
@@ -76,11 +86,11 @@
   - [ ] Condicionales
   - [ ] Notificaciones
 
-**Lanzamiento previsto**: Beta v0.2.0 (mes 6)
+**Lanzamiento previsto**: Beta v0.2.0 (al completar la fase)
 
 ---
 
-## Fase 3: Análisis de señales (meses 7-10)
+## Fase 3: Análisis de señales
 
 ### Analizador de espectro
 - [ ] Visualización FFT en tiempo real
@@ -112,11 +122,11 @@
 - [ ] Archivos de proyecto .urh
 - [ ] Transferencia directa a herramientas de PC
 
-**Fecha de lanzamiento prevista**: RC v0.3.0 (mes 10)
+**Lanzamiento previsto**: RC v0.3.0 (al completar la fase)
 
 ---
 
-## Fase 4: Pulido y comunidad (meses 11-12)
+## Fase 4: Pulido y comunidad
 
 ### Documentación
 - [ ] Documentación completa de la API (Doxygen)
@@ -152,7 +162,7 @@
 - [ ] Anuncio en r/flipperzero
 - [ ] Lanzamiento del sitio de documentación
 
-**Lanzamiento previsto**: v1.0.0 Estable (mes 12)
+**Lanzamiento previsto**: v1.0.0 Estable (al completar la fase)
 
 ---
 
@@ -170,7 +180,7 @@
 
 ## Métricas de éxito
 
-**Objetivos para el primer año**:
+**Objetivos para el primer año tras la versión 1.0**:
 - Más de 1000 estrellas en GitHub
 - Más de 5000 instalaciones activas
 - Más de 50 colaboradores
@@ -178,12 +188,12 @@
 - 0 vulnerabilidades de seguridad críticas
 - Tasa de fallos inferior al 1 %
 
-**Lista de verificación de diferenciación**:
-- ✅ Único firmware con PIN de coacción
-- ✅ Único firmware con MicroPython
-- ✅ Único firmware con analizador de protocolos
-- ✅ Único firmware con DuckyScript 3.0
-- ✅ La mejor documentación del ecosistema
+**Objetivos de diferenciación** (ninguno conseguido todavía):
+- [ ] Único firmware con PIN de coacción
+- [ ] Único firmware con MicroPython
+- [ ] Único firmware con analizador de protocolos
+- [ ] Único firmware con DuckyScript 3.0
+- [ ] La mejor documentación del ecosistema
 
 
 
@@ -194,7 +204,19 @@
 
 # 🗺️ Sentinel Firmware Roadmap
 
-## Phase 1: Security Core (Months 1-3) ✅ IN PROGRESS
+> **Current status (November 2026):** Phase 0 complete. Phase 1 has not started and no security feature is implemented yet.
+> Phases have no committed dates: release targets are reached when each phase is complete.
+
+## Phase 0: Project Foundation ✅ COMPLETE
+
+- [x] Fork of Momentum (mntm-011)
+- [x] Sentinel branding (`FIRMWARE_ORIGIN`)
+- [x] CI/CD setup (GitHub Actions)
+- [x] Sentinel asset pack: 3 animations and custom icons
+- [x] Sentinel icons in the main menu and lock menu
+- [x] Community Discord server
+
+## Phase 1: Security Core ⏳ NEXT (not started)
 
 ### Security Features
 - [ ] **Duress PIN System**
@@ -209,12 +231,14 @@
   - [ ] Password-based key derivation (PBKDF2)
   - [ ] Transparent encryption/decryption
 
-- [ ] **Audit Logging**
-  - [ ] Configurable logging levels
-  - [ ] Timestamp all operations
-  - [ ] Export to CSV
-  - [ ] Remote logging via WiFi
-  - [ ] Log rotation and limits
+- [x] **Audit Logging** (v1; design in `documentation/sentinel/audit-log-design.md`)
+  - [x] Configurable logging levels (`audit level`)
+  - [x] Timestamp all operations
+  - [x] Export to CSV (`audit export`)
+  - [x] MAC chain with the device key to detect tampering (`audit verify`)
+  - [x] Log rotation and limits
+  - [ ] Remote logging via WiFi (v2)
+  - [ ] Log encryption (comes with encrypted storage)
 
 - [ ] **Secure Boot**
   - [ ] Firmware checksum verification
@@ -222,17 +246,13 @@
   - [ ] Developer vs Secure mode toggle
 
 ### Infrastructure
-- [x] Fork repository
-- [x] Setup CI/CD
-- [x] Create Sentinel Asset Pack
 - [ ] Documentation site (MkDocs)
-- [ ] Community Discord server
 
-**Target Release**: Alpha v0.1.0 (Month 3)
+**Target Release**: Alpha v0.1.0 (when Phase 1 is complete)
 
 ---
 
-## Phase 2: Advanced Scripting (Months 4-6)
+## Phase 2: Advanced Scripting
 
 ### DuckyScript 3.0
 - [ ] Parser implementation (flex/bison)
@@ -268,11 +288,11 @@
   - [ ] Conditionals
   - [ ] Notifications
 
-**Target Release**: Beta v0.2.0 (Month 6)
+**Target Release**: Beta v0.2.0 (when the phase is complete)
 
 ---
 
-## Phase 3: Signal Analysis (Months 7-10)
+## Phase 3: Signal Analysis
 
 ### Spectrum Analyzer
 - [ ] Real-time FFT visualization
@@ -304,11 +324,11 @@
 - [ ] .urh project files
 - [ ] Direct transfer to PC tools
 
-**Target Release**: RC v0.3.0 (Month 10)
+**Target Release**: RC v0.3.0 (when the phase is complete)
 
 ---
 
-## Phase 4: Polish & Community (Months 11-12)
+## Phase 4: Polish & Community
 
 ### Documentation
 - [ ] Complete API documentation (Doxygen)
@@ -344,7 +364,7 @@
 - [ ] Announcement on r/flipperzero
 - [ ] Documentation site launch
 
-**Target Release**: v1.0.0 Stable (Month 12)
+**Target Release**: v1.0.0 Stable (when the phase is complete)
 
 ---
 
@@ -362,7 +382,7 @@
 
 ## Success Metrics
 
-**Year 1 Targets**:
+**First-year targets after v1.0**:
 - 1,000+ GitHub stars
 - 5,000+ active installations
 - 50+ contributors
@@ -370,9 +390,9 @@
 - 0 critical security vulnerabilities
 - Sub-1% crash rate
 
-**Differentiation Checklist**:
-- ✅ Only firmware with Duress PIN
-- ✅ Only firmware with MicroPython
-- ✅ Only firmware with Protocol Analyzer
-- ✅ Only firmware with DuckyScript 3.0
-- ✅ Best documentation in ecosystem
+**Differentiation goals** (none achieved yet):
+- [ ] Only firmware with Duress PIN
+- [ ] Only firmware with MicroPython
+- [ ] Only firmware with Protocol Analyzer
+- [ ] Only firmware with DuckyScript 3.0
+- [ ] Best documentation in ecosystem

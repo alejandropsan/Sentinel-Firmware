@@ -22,6 +22,14 @@ App(
 )
 
 App(
+    appid="test_audit",
+    sources=["tests/common/*.c", "tests/audit/*.c"],
+    apptype=FlipperAppType.PLUGIN,
+    entry_point="get_api",
+    requires=["unit_tests"],
+)
+
+App(
     appid="test_varint",
     sources=["tests/common/*.c", "tests/varint/*.c"],
     apptype=FlipperAppType.PLUGIN,

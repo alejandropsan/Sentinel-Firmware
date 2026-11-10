@@ -1,9 +1,10 @@
 entry,status,name,type,params
-Version,+,87.1,,
+Version,+,87.2,,
 Header,+,applications/drivers/subghz/cc1101_ext/cc1101_ext_interconnect.h,,
 Header,+,applications/main/archive/helpers/archive_helpers_ext.h,,
 Header,+,applications/main/subghz/subghz_fap.h,,
 Header,+,applications/services/applications.h,,
+Header,+,applications/services/audit/audit.h,,
 Header,+,applications/services/bt/bt_service/bt.h,,
 Header,+,applications/services/bt/bt_service/bt_keys_storage.h,,
 Header,+,applications/services/cli/cli.h,,
@@ -687,6 +688,11 @@ Function,-,atoff,float,const char*
 Function,+,atoi,int,const char*
 Function,-,atol,long,const char*
 Function,-,atoll,long long,const char*
+Function,+,audit_clear,_Bool,Audit*
+Function,+,audit_get_level,AuditLevel,Audit*
+Function,+,audit_log,void,"Audit*, AuditLevel, const char*, const char*, ..."
+Function,+,audit_log_va,void,"Audit*, AuditLevel, const char*, const char*, va_list"
+Function,+,audit_set_level,void,"Audit*, AuditLevel"
 Function,-,basename,char*,const char*
 Function,-,bcmp,int,"const void*, const void*, size_t"
 Function,-,bcopy,void,"const void*, void*, size_t"
@@ -3339,6 +3345,7 @@ Function,+,scene_manager_stop,void,SceneManager*
 Function,+,sd_api_get_fs_type_text,const char*,SDFsType
 Function,-,secure_getenv,char*,const char*
 Function,-,seed48,unsigned short*,unsigned short[3]
+Function,+,sentinel_audit,void,"AuditLevel, const char*, const char*, ..."
 Function,-,setbuf,void,"FILE*, char*"
 Function,-,setbuffer,void,"FILE*, char*, int"
 Function,-,setenv,int,"const char*, const char*, int"
@@ -4049,10 +4056,10 @@ Variable,+,A_GPIO_14,const Icon,
 Variable,+,A_Infrared_14,const Icon,
 Variable,+,A_Levelup_128x64,const Icon,
 Variable,+,A_Loading_24,const Icon,
-Variable,+,A_Momentum_14,const Icon,
 Variable,+,A_NFC_14,const Icon,
 Variable,+,A_Plugins_14,const Icon,
 Variable,+,A_Round_loader_8x8,const Icon,
+Variable,+,A_Sentinel_14,const Icon,
 Variable,+,A_Settings_14,const Icon,
 Variable,+,A_Sub1ghz_14,const Icon,
 Variable,+,A_U2F_14,const Icon,
@@ -4106,7 +4113,7 @@ Variable,+,I_CC_Bluetooth_16x16,const Icon,
 Variable,+,I_CC_DarkMode_16x16,const Icon,
 Variable,+,I_CC_LefthandedMode_16x16,const Icon,
 Variable,+,I_CC_Lock_16x16,const Icon,
-Variable,+,I_CC_Momentum_16x16,const Icon,
+Variable,+,I_CC_Sentinel_16x16,const Icon,
 Variable,+,I_CC_Settings_16x16,const Icon,
 Variable,-,I_Certification1_103x56,const Icon,
 Variable,-,I_Certification2_46x33,const Icon,

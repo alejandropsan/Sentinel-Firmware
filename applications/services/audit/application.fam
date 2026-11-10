@@ -1,0 +1,22 @@
+App(
+    appid="audit",
+    name="AuditSrv",
+    apptype=FlipperAppType.SERVICE,
+    targets=["f7"],
+    entry_point="audit_srv",
+    cdefines=["SRV_AUDIT"],
+    requires=["storage", "loader", "desktop"],
+    stack_size=2 * 1024,
+    order=45,
+    sources=["audit.c", "audit_storage.c", "audit_settings.c"],
+    sdk_headers=["audit.h"],
+)
+
+App(
+    appid="cli_audit",
+    targets=["f7"],
+    apptype=FlipperAppType.PLUGIN,
+    entry_point="cli_audit_ep",
+    requires=["cli"],
+    sources=["audit_cli.c", "audit_storage.c", "audit_settings.c"],
+)
